@@ -1,0 +1,22 @@
+Unnamed: 0,Nutrisi,Minimum,Maximum,Dampak Kelebihan,Dampak Kekurangan,Fungsi Zat,Rekomendasi Harian Anak (1-5 tahun)
+0,Energy (kJ),4000,5000,"Obesitas, penyakit jantung, diabetes","Kelelahan, penurunan berat badan",Sumber energi bagi tubuh,4000-5000 kJ
+1,Protein (g),13,20,"Gangguan ginjal, dehidrasi","Stunting, sistem imun yang lemah","Memperbaiki jaringan, pertumbuhan otot",13-20 g
+2,Fat (g),,,"Penyakit jantung, obesitas","Kulit kering, gangguan penyerapan vitamin","Sumber energi, penyerapan vitamin larut lemak",30-35% of total daily calories
+3,Carbohydrates (g),130,130,"Obesitas, diabetes tipe 2","Kelelahan, gangguan fungsi otak",Sumber energi utama,130 g
+4,Dietary Fiber (g),14,19,"Gangguan pencernaan, kembung","Sembelit, risiko kanker usus besar",Menjaga kesehatan pencernaan,14-19 g
+5,PUFA (g),4,7,"Gangguan perdarahan, risiko kanker","Gangguan fungsi otak, kesehatan jantung","Meningkatkan kesehatan jantung, peradangan",4-7 g
+6,Cholesterol (mg),,,"Penyakit jantung, stroke",Kesehatan jantung terganggu,"Komponen membran sel, produksi hormon",100 mg max
+7,Vitamin A (mg),,,"Mual, gangguan hati, peningkatan tekanan intrakranial","Kebutaan malam, sistem imun lemah",Penting untuk penglihatan dan fungsi sistem imun,0.3-0.4 mg (300-400 mcg)
+8,Vitamin E (eq.) (mg),5,7,"Diare, mual","Kerusakan sel, masalah reproduksi","Antioksidan, melindungi sel dari kerusakan",5-7 mg
+9,Vitamin B1 (mg),,,"Kelelahan, gangguan sistem saraf","Beri-Beri, kelemahan otot",Metabolisme energi,0.5 mg
+10,Vitamin B2 (mg),,,"Jarang, tetapi dapat menyebabkan kerusakan sel","Radang bibir, gangguan kulit","Metabolisme energi, kesehatan kulit",0.6 mg
+11,Vitamin B6 (mg),,,"Kerusakan saraf, kulit sensitif","Anemia, depresi, kelemahan otot","Metabolisme protein, produksi neurotransmitter",0.5 mg
+12,Total Folic Acid (µg),150,200,"Kelebihan tidak umum, dapat mengganggu penyerapan Zn","Anemia, cacat lahir","Penting untuk sintesis DNA, pembentukan sel darah",150-200 µg
+13,Vitamin C (mg),15,25,"Diare, mual","Skorbut, penurunan sistem imun","Antioksidan, kesehatan kulit, penyerapan besi",15-25 mg
+14,Sodium (mg),1000,1200,"Hipertensi, penyakit jantung","Kelemahan, pusing, dehidrasi",Keseimbangan cairan dan elektrolit,1000-1200 mg
+15,Potassium (mg),3000,3800,"Gangguan jantung, kram otot","Kelemahan otot, aritmia","Menjaga tekanan darah, fungsi otot",3000-3800 mg
+16,Calcium (mg),700,1000,"Batu ginjal, gangguan jantung","Osteoporosis, gangguan pertumbuhan",Kesehatan tulang dan gigi,700-1000 mg
+17,Magnesium (mg),80,130,"Diare, gangguan jantung","Kram otot, kelemahan, osteoporosis","Metabolisme energi, fungsi otot",80-130 mg
+18,Phosphorus (mg),460,500,"Gangguan ginjal, osteoporosis",Lemahnya tulang dan gigi,"Pembentukan tulang, penyimpanan energi",460-500 mg
+19,Iron (mg),7,10,"Keracunan, gangguan pencernaan","Anemia, kelelahan, sistem imun lemah","Transport oksigen dalam darah, pembentukan sel darah",7-10 mg
+20,Zinc (mg),3,5,"Mual, gangguan sistem imun","Gangguan pada sistem kekebalan tubuh, pertumbuhan terhambat, masalah kulit, gangguan penyembuhan luka, dan penurunan fungsi sensorik serta hormon.","Mendukung sistem kekebalan tubuh, membantu penyembuhan luka, mendukung pertumbuhan dan perkembangan, memetabolisme nutrisi, serta menjaga kesehatan kulit dan fungsi hormon.",3-5 mg
