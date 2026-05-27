@@ -217,7 +217,7 @@ elif menu == "Analisis Menu Harian":
         pct_iron = summary_gizi["Iron (mg)"] / AKG["Iron (mg)"] if AKG["Iron (mg)"] > 0 else 1.0
         if pct_iron < 0.7: cf_user_deficits["Kekurangan Iron (mg) > 30%"] = 1.0 - pct_iron
             
-        st.subheader("🔮 Prediksi CF Dampak Defisit Nutrisi")
+        st.subheader("Prediksi CF Dampak Defisit Nutrisi")
         if not cf_user_deficits:
             st.success("Aman! Menu makanan memenuhi standar gizi.")
         else:
@@ -281,4 +281,4 @@ elif menu == "Panel Manajemen Pakar":
         if st.button("Simpan Perubahan Aturan Pakar ke Sistem", type="primary"):
             st.session_state.rules_symptoms = edited_symptoms
             st.session_state.rules_intake = edited_intake
-            st.success("✅ Sukses! Seluruh basis aturan pakar berhasil di-update ke dalam memori aplikasi.")
+            st.success("Sukses! Seluruh basis aturan pakar berhasil di-update ke dalam memori aplikasi.")
