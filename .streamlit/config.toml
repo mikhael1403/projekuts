@@ -6,7 +6,7 @@ primaryColor = "#27ae60"
 backgroundColor = "#6126AD"
 
 # Warna background sidebar dan kotak input
-secondaryBackgroundColor = "#f1f8f4"
+secondaryBackgroundColor = "#FFF14D"
 
 # Warna teks utama
 textColor = "000000"
