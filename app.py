@@ -74,7 +74,7 @@ cf_options = {"Tidak Tahu": 0.0, "Gejala Ringan": 0.4, "Gejala Sedang": 0.7, "Ge
 # =========================================================================
 # 2. SIDEBAR NAVIGATION
 # =========================================================================
-st.sidebar.title("🥑 NutriExpert CF")
+st.sidebar.title("NutriExpert CF")
 menu = st.sidebar.radio("Pilih Halaman Aplikasi:", [
     "1. Ensiklopedia Gizi",
     "2. Rekomendasi Makanan (CF Engine)",
@@ -86,25 +86,25 @@ menu = st.sidebar.radio("Pilih Halaman Aplikasi:", [
 
 # ----------------- HALAMAN 1: ENSIKLOPEDIA GIZI -----------------
 if menu == "1. Ensiklopedia Gizi":
-    st.title("📖 1. Ensiklopedia Data Kandungan Gizi Makanan")
+    st.title("1. Ensiklopedia Data Kandungan Gizi Makanan")
     st.write(f"Dataset berisi **{len(st.session_state.food_df)} bahan pangan**.")
     
     selected_food = st.selectbox("Pilih Nama Makanan:", st.session_state.food_df["Nama Makanan"].unique())
     food_data = st.session_state.food_df[st.session_state.food_df["Nama Makanan"] == selected_food].iloc[0]
     
     col1, col2, col3 = st.columns(3)
-    col1.metric("🔥 Energi", f"{food_data.get('Energy (kJ)', 0)} kJ")
-    col1.metric("🍞 Karbohidrat", f"{food_data.get('Carbohydrates (g)', 0)} g")
-    col2.metric("💪 Protein", f"{food_data.get('Protein (g)', 0)} g")
-    col2.metric("🥦 Serat", f"{food_data.get('Dietary Fiber (g)', 0)} g")
-    col3.metric("🍊 Vitamin C", f"{food_data.get('Vitamin C (mg)', 0)} mg")
-    col3.metric("🩸 Zat Besi", f"{food_data.get('Iron (mg)', 0)} mg")
+    col1.metric("Energi", f"{food_data.get('Energy (kJ)', 0)} kJ")
+    col1.metric("Karbohidrat", f"{food_data.get('Carbohydrates (g)', 0)} g")
+    col2.metric("Protein", f"{food_data.get('Protein (g)', 0)} g")
+    col2.metric("Serat", f"{food_data.get('Dietary Fiber (g)', 0)} g")
+    col3.metric("Vitamin C", f"{food_data.get('Vitamin C (mg)', 0)} mg")
+    col3.metric("Zat Besi", f"{food_data.get('Iron (mg)', 0)} mg")
 
     st.dataframe(st.session_state.food_df, use_container_width=True)
 
 # ----------------- HALAMAN 2: REKOMENDASI CF -----------------
 elif menu == "2. Rekomendasi Makanan (CF Engine)":
-    st.title("🎯 2. Sistem Rekomendasi Makanan (Certainty Factor)")
+    st.title("2. Sistem Rekomendasi Makanan (Certainty Factor)")
     st.write("Sistem akan menghitung tingkat keyakinan (CF) sebuah makanan dalam memenuhi kebutuhan nutrisi harian Anda berdasarkan dataset `foods.csv`.")
     
     available_nutrients = [col for col in st.session_state.food_df.columns if col not in ["Unnamed: 0", "Nama Makanan"]]
@@ -142,7 +142,7 @@ elif menu == "2. Rekomendasi Makanan (CF Engine)":
 
 # ----------------- HALAMAN 3: DIAGNOSIS GEJALA (CF ENGINE) -----------------
 elif menu == "3. Diagnosis Gejala (CF)":
-    st.title("🩺 3. Sistem Pakar Diagnosa Malnutrisi Berdasarkan Gejala")
+    st.title("3. Sistem Pakar Diagnosa Malnutrisi Berdasarkan Gejala")
     unique_symptoms = st.session_state.rules_symptoms["Gejala"].unique()
     user_inputs = {}
     
@@ -175,7 +175,7 @@ elif menu == "3. Diagnosis Gejala (CF)":
 
 # ----------------- HALAMAN 4: ANALISIS MENU HARIAN (CF ENGINE) -----------------
 elif menu == "4. Analisis Menu Harian (CF)":
-    st.title("🍽️ 4. Evaluasi Menu Konsumsi Harian (Dataset Foods.csv)")
+    st.title("4. Evaluasi Menu Konsumsi Harian (Dataset Foods.csv)")
     
     selected_items = st.multiselect("Pilih seluruh menu makanan Anda:", st.session_state.food_df["Nama Makanan"].unique())
     if selected_items:
@@ -187,8 +187,8 @@ elif menu == "4. Analisis Menu Harian (CF)":
                 summary_gizi[key] += float(row.get(key, 0))
                 
         col1, col2 = st.columns(2)
-        col1.metric("💪 Protein", f"{summary_gizi['Protein (g)']:.1f} / {AKG['Protein (g)']} g")
-        col2.metric("🩸 Zat Besi", f"{summary_gizi['Iron (mg)']:.1f} / {AKG['Iron (mg)']} mg")
+        col1.metric("Protein", f"{summary_gizi['Protein (g)']:.1f} / {AKG['Protein (g)']} g")
+        col2.metric("Zat Besi", f"{summary_gizi['Iron (mg)']:.1f} / {AKG['Iron (mg)']} mg")
             
         cf_user_deficits = {}
         pct_protein = summary_gizi["Protein (g)"] / AKG["Protein (g)"] if AKG["Protein (g)"] > 0 else 1.0
@@ -211,7 +211,7 @@ elif menu == "4. Analisis Menu Harian (CF)":
 
 # ----------------- HALAMAN 5: KAMUS DAMPAK MALNUTRISI -----------------
 elif menu == "5. Kamus Dampak Malnutrisi":
-    st.title("📚 5. Kamus Dampak Malnutrisi (Katalog Edukasi)")
+    st.title("5. Kamus Dampak Malnutrisi (Katalog Edukasi)")
     st.write("Daftar katalog medis komprehensif berdasarkan standar nutrisi.")
     
     if not std_nutrition_df.empty:
@@ -221,16 +221,16 @@ elif menu == "5. Kamus Dampak Malnutrisi":
             dampak_lebih = row['Dampak Kelebihan']
             fungsi = row['Fungsi Zat']
             
-            with st.expander(f"📌 {nutrisi}"):
+            with st.expander(f"{nutrisi}"):
                 st.write(f"**Fungsi Zat:** {fungsi}")
-                st.write(f"**⚠️ Dampak Kekurangan:** {dampak_kurang}")
-                st.write(f"**⚠️ Dampak Kelebihan:** {dampak_lebih}")
+                st.write(f"**Dampak Kekurangan:** {dampak_kurang}")
+                st.write(f"**Dampak Kelebihan:** {dampak_lebih}")
     else:
         st.warning("Dataset standard-nutrition.csv belum dimuat.")
 
 # ----------------- HALAMAN 6: PANEL ADMIN (MANAJEMEN PAKAR) -----------------
 elif menu == "6. Panel Manajemen Pakar":
-    st.title("🛠️ 6. Panel Manajemen Aturan Pakar (Autentikasi Admin)")
+    st.title("6. Panel Manajemen Aturan Pakar (Autentikasi Admin)")
     
     if not st.session_state.logged_in:
         st.subheader("Silakan Login Terlebih Dahulu")
@@ -244,18 +244,18 @@ elif menu == "6. Panel Manajemen Pakar":
             else:
                 st.error("Kombinasi Username atau Password salah!")
     else:
-        st.success("🔓 Anda berhasil masuk sebagai Pakar/Admin Sistem!")
+        st.success("Anda berhasil masuk sebagai Pakar/Admin Sistem!")
         if st.button("Keluar / Logout Admin"):
             st.session_state.logged_in = False
             st.rerun()
             
         st.divider()
-        st.subheader("✏️ Ubah Bobot Persentase CF Pakar (Modul Gejala - Halaman 3)")
+        st.subheader("Ubah Bobot Persentase CF Pakar (Modul Gejala - Halaman 3)")
         st.caption("Double klik pada kolom 'CF_Pakar' untuk mengubah angka keyakinan medis (rentang 0.0 s.d 1.0).")
         
         edited_symptoms = st.data_editor(st.session_state.rules_symptoms, num_rows="dynamic", key="editor_sym")
         
-        st.subheader("✏️ Ubah Bobot Persentase CF Pakar (Modul Defisit Makan - Halaman 4)")
+        st.subheader("Ubah Bobot Persentase CF Pakar (Modul Defisit Makan - Halaman 4)")
         edited_intake = st.data_editor(st.session_state.rules_intake, num_rows="dynamic", key="editor_int")
         
         if st.button("Simpan Perubahan Aturan Pakar ke Sistem", type="primary"):
