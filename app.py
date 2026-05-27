@@ -87,7 +87,7 @@ cf_options = {"Tidak Tahu": 0.0, "Gejala Ringan": 0.4, "Gejala Sedang": 0.7, "Ge
 # =========================================================================
 # 2. SIDEBAR NAVIGATION
 # =========================================================================
-st.sidebar.title("Nutrisi AI & SPK")
+st.sidebar.title("Nutrisi SPK")
 menu = st.sidebar.radio("Pilih Halaman Aplikasi:", [
     "1. Ensiklopedia Gizi",
     "2. Rekomendasi Makanan (CF)",
