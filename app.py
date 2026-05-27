@@ -3,7 +3,27 @@ import pandas as pd
 
 # Set konfigurasi layout halaman utama web
 st.set_page_config(page_title="NutriExpert CF System", layout="wide", initial_sidebar_state="expanded")
-
+st.markdown("""
+    <style>
+    /* Mengubah radius tombol utama */
+    .stButton>button {
+        border-radius: 20px;
+        transition: all 0.3s;
+    }
+    
+    /* Efek hover pada tombol */
+    .stButton>button:hover {
+        transform: scale(1.05);
+        box-shadow: 0px 4px 10px rgba(0,0,0,0.1);
+    }
+    
+    /* Mempercantik kotak metric (angka gizi) */
+    [data-testid="stMetricValue"] {
+        color: #27ae60;
+        font-weight: bold;
+    }
+    </style>
+""", unsafe_allow_html=True)
 # =========================================================================
 # 1. INITIALIZE DATASETS & STATE
 # =========================================================================
