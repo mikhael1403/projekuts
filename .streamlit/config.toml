@@ -1,9 +1,9 @@
 [theme]
 # Warna utama untuk tombol, slider, dan elemen aktif
-primaryColor = "#27ae60"
+primaryColor = "2E74FF"
 
 # Warna background halaman utama
-backgroundColor = "#6126AD"
+backgroundColor = "#0055FF"
 
 # Warna background sidebar dan kotak input
 secondaryBackgroundColor = "#FFF14D"
