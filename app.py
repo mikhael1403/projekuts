@@ -5,34 +5,46 @@ import pandas as pd
 st.set_page_config(page_title="NutriExpert CF System", layout="wide", initial_sidebar_state="expanded")
 
 # =========================================================================
-# 1. INITIALIZE DATASET & STATE (Disimpan di memori agar bisa diubah Admin)
+# 1. INITIALIZE DATASETS & STATE (Disimpan di memori agar bisa diubah Admin)
 # =========================================================================
 
 # Load dataset standard-nutrition.csv
 @st.cache_data
-def load_nutrition_data():
+def load_nutrition_standards():
     try:
         return pd.read_csv("standard-nutrition.csv")
     except FileNotFoundError:
-        st.error("File 'standard-nutrition.csv' tidak ditemukan. Pastikan file berada di direktori yang sama.")
+        st.error("File 'standard-nutrition.csv' tidak ditemukan.")
         return pd.DataFrame()
 
-std_nutrition_df = load_nutrition_data()
+# Load dataset foods.csv
+@st.cache_data
+def load_food_data():
+    try:
+        df = pd.read_csv("foods.csv")
+        # Mengganti nama kolom "Menu" menjadi "Nama Makanan" agar sesuai dengan UI
+        if "Menu" in df.columns:
+            df.rename(columns={"Menu": "Nama Makanan"}, inplace=True)
+        # Mengisi nilai kosong dengan 0 agar perhitungan tidak error
+        df.fillna(0, inplace=True)
+        return df
+    except FileNotFoundError:
+        st.error("File 'foods.csv' tidak ditemukan.")
+        return pd.DataFrame()
+
+std_nutrition_df = load_nutrition_standards()
+foods_data_df = load_food_data()
 
 if 'logged_in' not in st.session_state:
     st.session_state.logged_in = False
 
-# Dataset Utama Gizi Makanan (Untuk Halaman 1, 2, dan 4)
+# Memasukkan data makanan dari CSV ke dalam session_state
 if 'food_df' not in st.session_state:
-    st.session_state.food_df = pd.DataFrame([
-        {"Nama Makanan": "Nasi Putih", "Energy (kJ)": 544, "Carbohydrates (g)": 28.0, "Protein (g)": 2.7, "Dietary Fiber (g)": 0.4, "Vitamin C (mg)": 0.0, "Iron (mg)": 1.2},
-        {"Nama Makanan": "Dada Ayam", "Energy (kJ)": 690, "Carbohydrates (g)": 0.0, "Protein (g)": 31.0, "Dietary Fiber (g)": 0.0, "Vitamin C (mg)": 0.0, "Iron (mg)": 1.0},
-        {"Nama Makanan": "Tempe Goreng", "Energy (kJ)": 807, "Carbohydrates (g)": 9.0, "Protein (g)": 19.0, "Dietary Fiber (g)": 1.4, "Vitamin C (mg)": 0.0, "Iron (mg)": 2.7},
-        {"Nama Makanan": "Telur Rebus", "Energy (kJ)": 648, "Carbohydrates (g)": 1.1, "Protein (g)": 13.0, "Dietary Fiber (g)": 0.0, "Vitamin C (mg)": 0.0, "Iron (mg)": 1.2},
-        {"Nama Makanan": "Bayam Rebus", "Energy (kJ)": 96, "Carbohydrates (g)": 4.0, "Protein (g)": 3.0, "Dietary Fiber (g)": 2.4, "Vitamin C (mg)": 10.0, "Iron (mg)": 3.5},
-        {"Nama Makanan": "Jeruk", "Energy (kJ)": 196, "Carbohydrates (g)": 12.0, "Protein (g)": 0.9, "Dietary Fiber (g)": 2.4, "Vitamin C (mg)": 53.2, "Iron (mg)": 0.1},
-        {"Nama Makanan": "Susu Sapi", "Energy (kJ)": 175, "Carbohydrates (g)": 5.0, "Protein (g)": 3.4, "Dietary Fiber (g)": 0.0, "Vitamin C (mg)": 0.0, "Iron (mg)": 0.1}
-    ])
+    if not foods_data_df.empty:
+        st.session_state.food_df = foods_data_df
+    else:
+        # Fallback sementara jika CSV gagal diload
+        st.session_state.food_df = pd.DataFrame([{"Nama Makanan": "Data Kosong", "Energy (kJ)": 0, "Carbohydrates (g)": 0, "Protein (g)": 0, "Dietary Fiber (g)": 0, "Vitamin C (mg)": 0, "Iron (mg)": 0}])
 
 # Aturan Pakar (Rule Base) Berdasarkan Gejala Klinis (Untuk Halaman 3)
 if 'rules_symptoms' not in st.session_state:
@@ -58,7 +70,7 @@ if 'rules_intake' not in st.session_state:
         {"Defisit": "Kekurangan Iron (mg) > 30%", "Prediksi_Dampak": "Mudah Lelah & Kurang Konsentrasi", "CF_Pakar": 0.65}
     ])
 
-# Acuan Angka Kecukupan Gizi (AKG) dibuat dari nilai Minimum dataset yang diupload
+# Acuan Angka Kecukupan Gizi (AKG) dibuat dari nilai Minimum dataset standard-nutrition.csv
 AKG = {}
 if not std_nutrition_df.empty:
     for index, row in std_nutrition_df.dropna(subset=['Minimum']).iterrows():
@@ -102,21 +114,21 @@ menu = st.sidebar.radio("Pilih Halaman Aplikasi:", [
 # ----------------- HALAMAN 1: ENSIKLOPEDIA GIZI -----------------
 if menu == "1. Ensiklopedia Gizi":
     st.title("📖 1. Ensiklopedia Data Kandungan Gizi Makanan")
-    st.write("Gunakan fitur ini untuk mencari kandungan nutrisi suatu bahan pangan secara instan.")
+    st.write(f"Gunakan fitur ini untuk mencari kandungan nutrisi dari **{len(st.session_state.food_df)} bahan pangan** secara instan.")
     
     selected_food = st.selectbox("Pilih atau Ketik Nama Makanan:", st.session_state.food_df["Nama Makanan"].unique())
     food_data = st.session_state.food_df[st.session_state.food_df["Nama Makanan"] == selected_food].iloc[0]
     
     col1, col2, col3 = st.columns(3)
     with col1:
-        st.metric("🔥 Energi", f"{food_data['Energy (kJ)']} kJ")
-        st.metric("🍞 Karbohidrat", f"{food_data['Carbohydrates (g)']} g")
+        st.metric("🔥 Energi", f"{food_data.get('Energy (kJ)', 0)} kJ")
+        st.metric("🍞 Karbohidrat", f"{food_data.get('Carbohydrates (g)', 0)} g")
     with col2:
-        st.metric("💪 Protein", f"{food_data['Protein (g)']} g")
-        st.metric("🥦 Serat", f"{food_data['Dietary Fiber (g)']} g")
+        st.metric("💪 Protein", f"{food_data.get('Protein (g)', 0)} g")
+        st.metric("🥦 Serat", f"{food_data.get('Dietary Fiber (g)', 0)} g")
     with col3:
-        st.metric("🍊 Vitamin C", f"{food_data['Vitamin C (mg)']} mg")
-        st.metric("🩸 Zat Besi", f"{food_data['Iron (mg)']} mg")
+        st.metric("🍊 Vitamin C", f"{food_data.get('Vitamin C (mg)', 0)} mg")
+        st.metric("🩸 Zat Besi", f"{food_data.get('Iron (mg)', 0)} mg")
 
     st.subheader("📋 Seluruh Tabel Dataset Makanan")
     st.dataframe(st.session_state.food_df, use_container_width=True)
@@ -126,8 +138,11 @@ elif menu == "2. Filter Rekomendasi Makanan":
     st.title("🔍 2. Rekomendasi Balik: Cari Makanan Berdasarkan Kebutuhan Nutrisi")
     st.write("Masukkan target zat gizi tertentu untuk menampilkan jenis makanan penunjang terbaik.")
     
-    gizi_pilihan = st.selectbox("Saya membutuhkan makanan yang tinggi:", ["Protein (g)", "Carbohydrates (g)", "Dietary Fiber (g)", "Vitamin C (mg)", "Iron (mg)"])
-    min_val = st.slider("Batas Minimal Kandungan Gizi per porsi:", 0.0, 60.0, 5.0)
+    # Menampilkan opsi filter dari kolom numerik di dataset foods.csv
+    available_nutrients = [col for col in st.session_state.food_df.columns if col not in ["Unnamed: 0", "Nama Makanan"]]
+    gizi_pilihan = st.selectbox("Saya membutuhkan makanan yang tinggi:", available_nutrients, index=available_nutrients.index("Protein (g)") if "Protein (g)" in available_nutrients else 0)
+    
+    min_val = st.slider("Batas Minimal Kandungan Gizi per porsi:", 0.0, float(st.session_state.food_df[gizi_pilihan].max() + 10), 5.0)
     
     filtered_df = st.session_state.food_df[st.session_state.food_df[gizi_pilihan] >= min_val].sort_values(by=gizi_pilihan, ascending=False)
     
@@ -199,7 +214,7 @@ elif menu == "4. Analisis Menu Harian (CF)":
         for item in selected_items:
             row = st.session_state.food_df[st.session_state.food_df["Nama Makanan"] == item].iloc[0]
             for key in summary_gizi.keys():
-                summary_gizi[key] += row[key]
+                summary_gizi[key] += float(row.get(key, 0))
                 
         st.subheader("Total Asupan Nutrisi Masuk (Vs Target Minimal)")
         col1, col2, col3 = st.columns(3)
@@ -213,22 +228,22 @@ elif menu == "4. Analisis Menu Harian (CF)":
             st.metric("🍊 Vitamin C", f"{summary_gizi['Vitamin C (mg)']:.1f} / {AKG['Vitamin C (mg)']} mg")
             st.metric("🩸 Zat Besi", f"{summary_gizi['Iron (mg)']:.1f} / {AKG['Iron (mg)']} mg")
             
-        # Defisit diukur dari target AKG (Menggunakan dataset standard-nutrition)
+        # Defisit diukur dari target AKG
         cf_user_deficits = {}
         
-        pct_serat = summary_gizi["Dietary Fiber (g)"] / AKG["Dietary Fiber (g)"]
+        pct_serat = summary_gizi["Dietary Fiber (g)"] / AKG["Dietary Fiber (g)"] if AKG["Dietary Fiber (g)"] > 0 else 1.0
         if pct_serat < 0.5:
             cf_user_deficits["Kekurangan Dietary Fiber (g) > 50%"] = 1.0 - pct_serat
             
-        pct_protein = summary_gizi["Protein (g)"] / AKG["Protein (g)"]
+        pct_protein = summary_gizi["Protein (g)"] / AKG["Protein (g)"] if AKG["Protein (g)"] > 0 else 1.0
         if pct_protein < 0.6:
             cf_user_deficits["Kekurangan Protein (g) > 40%"] = 1.0 - pct_protein
             
-        pct_vit_c = summary_gizi["Vitamin C (mg)"] / AKG["Vitamin C (mg)"]
+        pct_vit_c = summary_gizi["Vitamin C (mg)"] / AKG["Vitamin C (mg)"] if AKG["Vitamin C (mg)"] > 0 else 1.0
         if pct_vit_c < 0.5:
             cf_user_deficits["Kekurangan Vitamin C (mg) > 50%"] = 1.0 - pct_vit_c
             
-        pct_iron = summary_gizi["Iron (mg)"] / AKG["Iron (mg)"]
+        pct_iron = summary_gizi["Iron (mg)"] / AKG["Iron (mg)"] if AKG["Iron (mg)"] > 0 else 1.0
         if pct_iron < 0.7:
             cf_user_deficits["Kekurangan Iron (mg) > 30%"] = 1.0 - pct_iron
             
