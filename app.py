@@ -1,15 +1,7 @@
 import streamlit as st
 import pandas as pd
-import numpy as np
 
 # Coba import sklearn untuk K-Means
-try:
-    from sklearn.cluster import KMeans
-    from sklearn.preprocessing import StandardScaler
-    HAS_SKLEARN = True
-except ImportError:
-    HAS_SKLEARN = False
-
 # Set konfigurasi layout halaman utama web
 st.set_page_config(page_title="NutriExpert AI & CF System", layout="wide", initial_sidebar_state="expanded")
 st.markdown("""
@@ -197,42 +189,6 @@ elif menu == "4. Analisis Menu Harian":
             row = st.session_state.food_df[st.session_state.food_df["Nama Makanan"] == item].iloc[0]
             for key in summary_gizi.keys(): summary_gizi[key] += float(row.get(key, 0))
         st.write(f"**Total Protein:** {summary_gizi['Protein (g)']:.1f}g | **Total Zat Besi:** {summary_gizi['Iron (mg)']:.1f}mg")
-
-# ----------------- HALAMAN 5: K-MEANS CLUSTERING -----------------
-elif menu == "5. Clustering Makanan (K-Means)":
-    st.title("🤖 5. Pengelompokan Makanan Otomatis (Machine Learning)")
-    st.write("Gunakan algoritma **K-Means Clustering** untuk mengelompokkan makanan berdasarkan kemiripan nutrisinya.")
-    
-    if not HAS_SKLEARN:
-        st.error("Library `scikit-learn` belum terinstall. Buka terminal dan jalankan: `pip install scikit-learn`")
-    else:
-        features = st.multiselect("Pilih nutrisi untuk dikelompokkan:", available_nutrients, default=["Energy (kJ)", "Protein (g)", "Fat (g)"])
-        k_clusters = st.slider("Jumlah Kelompok (K):", min_value=2, max_value=7, value=3)
-        
-        if st.button("Jalankan K-Means Clustering", type="primary") and len(features) > 0:
-            df_cluster = st.session_state.food_df.copy()
-            X = df_cluster[features].fillna(0)
-            
-            # Normalisasi data
-            scaler = StandardScaler()
-            X_scaled = scaler.fit_transform(X)
-            
-            # Proses K-Means
-            kmeans = KMeans(n_clusters=k_clusters, random_state=42, n_init=10)
-            df_cluster['Cluster'] = kmeans.fit_predict(X_scaled)
-            
-            st.success(f"Berhasil mengelompokkan {len(df_cluster)} makanan ke dalam {k_clusters} cluster!")
-            
-            # Tampilkan rata-rata tiap cluster untuk dianalisa
-            st.subheader("Rata-rata Nutrisi per Kelompok")
-            cluster_mean = df_cluster.groupby('Cluster')[features].mean().reset_index()
-            st.dataframe(cluster_mean, use_container_width=True)
-            
-            # Tampilkan hasil makanan
-            st.subheader("Daftar Makanan di Setiap Kelompok")
-            for i in range(k_clusters):
-                with st.expander(f"Kelompok {i} ({len(df_cluster[df_cluster['Cluster']==i])} makanan)"):
-                    st.dataframe(df_cluster[df_cluster['Cluster']==i][['Nama Makanan'] + features], use_container_width=True)
 
 # ----------------- HALAMAN 6: TOPSIS -----------------
 elif menu == "6. Rekomendasi Pintar (TOPSIS)":
