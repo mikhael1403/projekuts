@@ -74,7 +74,7 @@ cf_options = {"Tidak Tahu": 0.0, "Gejala Ringan": 0.4, "Gejala Sedang": 0.7, "Ge
 # =========================================================================
 # 2. SIDEBAR NAVIGATION
 # =========================================================================
-st.sidebar.title("NutriExpert CF")
+st.sidebar.title("Nutrisi Balita")
 menu = st.sidebar.radio("Pilih Halaman Aplikasi:", [
     "Ensiklopedia Gizi",
     "Rekomendasi Makanan",
