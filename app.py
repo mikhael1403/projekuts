@@ -1,7 +1,7 @@
 import streamlit as st
 import pandas as pd
+import numpy as np
 
-# Coba import sklearn untuk K-Means
 # Set konfigurasi layout halaman utama web
 st.set_page_config(page_title="NutriExpert AI & CF System", layout="wide", initial_sidebar_state="expanded")
 st.markdown("""
@@ -93,14 +93,13 @@ menu = st.sidebar.radio("Pilih Halaman Aplikasi:", [
     "2. Rekomendasi Makanan (CF)",
     "3. Diagnosis Gejala (CF)",
     "4. Analisis Menu Harian",
-    "5. Clustering Makanan (K-Means)",
+    "5. Analisis Kelayakan (Fuzzy Logic)",
     "6. Rekomendasi Pintar (TOPSIS)",
     "7. Panel Manajemen Pakar"
 ])
 
 # Ambil list nutrisi numerik untuk pilihan filter
 available_nutrients = [col for col in st.session_state.food_df.columns if col not in ["Unnamed: 0", "Nama Makanan"] and pd.api.types.is_numeric_dtype(st.session_state.food_df[col])]
-
 
 # ----------------- HALAMAN 1 sampai 4 -----------------
 if menu == "1. Ensiklopedia Gizi":
@@ -190,10 +189,72 @@ elif menu == "4. Analisis Menu Harian":
             for key in summary_gizi.keys(): summary_gizi[key] += float(row.get(key, 0))
         st.write(f"**Total Protein:** {summary_gizi['Protein (g)']:.1f}g | **Total Zat Besi:** {summary_gizi['Iron (mg)']:.1f}mg")
 
+# ----------------- HALAMAN 5: FUZZY LOGIC -----------------
+elif menu == "5. Analisis Kelayakan (Fuzzy Logic)":
+    st.title("🧠 5. Klasifikasi Kelayakan Makanan (Fuzzy Logic)")
+    st.write("Sistem menggunakan fungsi keanggotaan Logika Fuzzy untuk menilai kelayakan kandungan makanan: **Rendah**, **Sedang**, atau **Tinggi**.")
+    
+    fuzzy_nutrisi = st.selectbox("Pilih Nutrisi untuk Dianalisis:", available_nutrients, index=available_nutrients.index("Protein (g)") if "Protein (g)" in available_nutrients else 0)
+    target_akg = AKG.get(fuzzy_nutrisi, 10.0)
+    st.info(f"Basis Himpunan Fuzzy menggunakan Standar AKG {fuzzy_nutrisi}: **{target_akg}**")
+
+    if st.button("Proses Logika Fuzzy", type="primary"):
+        fuzzy_results = []
+        
+        for _, row in st.session_state.food_df.iterrows():
+            val = float(row.get(fuzzy_nutrisi, 0))
+            
+            # Rumus Keanggotaan Fuzzy (Mamdani sederhana)
+            u_rendah, u_sedang, u_tinggi = 0.0, 0.0, 0.0
+            
+            # 1. Himpunan Rendah (0 s/d 40% AKG)
+            if val <= 0.2 * target_akg: u_rendah = 1.0
+            elif 0.2 * target_akg < val <= 0.4 * target_akg: 
+                u_rendah = (0.4 * target_akg - val) / (0.2 * target_akg)
+                
+            # 2. Himpunan Sedang (20% s/d 80% AKG)
+            if 0.2 * target_akg < val <= 0.5 * target_akg:
+                u_sedang = (val - 0.2 * target_akg) / (0.3 * target_akg)
+            elif 0.5 * target_akg < val <= 0.8 * target_akg:
+                u_sedang = (0.8 * target_akg - val) / (0.3 * target_akg)
+                
+            # 3. Himpunan Tinggi (> 50% AKG)
+            if 0.5 * target_akg < val <= 0.8 * target_akg:
+                u_tinggi = (val - 0.5 * target_akg) / (0.3 * target_akg)
+            elif val > 0.8 * target_akg: u_tinggi = 1.0
+
+            # Defuzzifikasi sederhana (mencari derajat tertinggi)
+            kategori_dominan = "Rendah"
+            skor_dominan = u_rendah
+            if u_sedang > skor_dominan:
+                kategori_dominan = "Sedang"
+                skor_dominan = u_sedang
+            if u_tinggi > skor_dominan:
+                kategori_dominan = "Tinggi"
+                skor_dominan = u_tinggi
+                
+            # Filter hanya tampilkan yang Sedang dan Tinggi agar berguna bagi user
+            if kategori_dominan in ["Sedang", "Tinggi"] and val > 0:
+                fuzzy_results.append({
+                    "Nama Makanan": row["Nama Makanan"],
+                    f"Kandungan {fuzzy_nutrisi}": val,
+                    "Kategori Fuzzy": kategori_dominan,
+                    "Derajat Keanggotaan (μ)": f"{skor_dominan:.2f}"
+                })
+                
+        if fuzzy_results:
+            df_fuzzy = pd.DataFrame(fuzzy_results)
+            # Urutkan berdasarkan yang 'Tinggi' dulu, lalu 'Sedang'
+            df_fuzzy = df_fuzzy.sort_values(by=["Kategori Fuzzy", "Derajat Keanggotaan (μ)"], ascending=[False, False])
+            st.success("Tabel Hasil Defuzzifikasi (Hanya menampilkan kategori Sedang & Tinggi):")
+            st.dataframe(df_fuzzy, use_container_width=True)
+        else:
+            st.warning("Belum ada makanan dengan nilai gizi yang mencukupi untuk masuk ke himpunan fuzzy Sedang/Tinggi.")
+
 # ----------------- HALAMAN 6: TOPSIS -----------------
 elif menu == "6. Rekomendasi Pintar (TOPSIS)":
     st.title("⚖️ 6. Rekomendasi Multi-Kriteria (Metode TOPSIS)")
-    st.write("Sistem Pendukung Keputusan ini akan merangking makanan terbaik jika Anda memiliki banyak kriteria yang bertentangan (misal: Ingin tinggi protein TAPI harus rendah lemak dan sodium).")
+    st.write("Sistem akan merangking makanan terbaik jika Anda memiliki banyak kriteria yang bertentangan (misal: Ingin tinggi protein TAPI harus rendah lemak).")
     
     st.subheader("Tentukan Kriteria Pencarian")
     col1, col2 = st.columns(2)
@@ -203,10 +264,17 @@ elif menu == "6. Rekomendasi Pintar (TOPSIS)":
         cost_cols = st.multiselect("Kriteria Cost (Makin rendah makin bagus):", available_nutrients, default=["Fat (g)", "Sodium (mg)"])
     
     if st.button("Jalankan TOPSIS", type="primary"):
-        all_criteria = benefit_cols + cost_cols
-        if not all_criteria:
+        # PERBAIKAN: Validasi Pengecekan Error Intersecting Kriteria
+        overlap = set(benefit_cols).intersection(set(cost_cols))
+        
+        if overlap:
+            # Jika ada nutrisi yang sama di benefit dan cost, sistem akan menolak
+            overlap_str = ", ".join(overlap)
+            st.error(f"⚠️ PERINGATAN LOGIKA: Kriteria '{overlap_str}' tidak boleh dipilih di Benefit sekaligus Cost. Silakan hapus salah satu!")
+        elif not benefit_cols and not cost_cols:
             st.warning("Pilih minimal 1 kriteria!")
         else:
+            all_criteria = benefit_cols + cost_cols
             # 1. Ambil dataset & bersihkan nilai kosong
             df_topsis = st.session_state.food_df[['Nama Makanan'] + all_criteria].copy()
             df_topsis = df_topsis.set_index("Nama Makanan").fillna(0)
@@ -218,8 +286,6 @@ elif menu == "6. Rekomendasi Pintar (TOPSIS)":
             pembagi = np.sqrt((df_topsis**2).sum())
             pembagi = pembagi.replace(0, 1) # Cegah bagi 0
             df_norm = df_topsis / pembagi
-            
-            # (Asumsi Bobot / Weight sama rata (1) untuk semua kriteria)
             
             # 3. Solusi Ideal Positif (V+) & Negatif (V-)
             ideal_best = {}
@@ -244,9 +310,9 @@ elif menu == "6. Rekomendasi Pintar (TOPSIS)":
             hasil_topsis['Skor TOPSIS'] = skor_topsis
             hasil_topsis = hasil_topsis.sort_values(by="Skor TOPSIS", ascending=False).reset_index()
             
-            st.success("Tabel Rekomendasi (Diurutkan dari yang terbaik):")
+            st.success("Tabel Rekomendasi (Diurutkan dari yang terbaik berdasarkan rasio benefit & cost):")
             st.dataframe(hasil_topsis.head(25), use_container_width=True)
-            st.caption("Skor TOPSIS mendekati 1.0 berarti makanan tersebut sangat mendekati kondisi ideal (tinggi di benefit, rendah di cost).")
+            st.caption("Skor TOPSIS mendekati 1.0 berarti makanan tersebut sangat ideal (tinggi di benefit, sangat rendah di cost).")
 
 # ----------------- HALAMAN 7: PANEL ADMIN -----------------
 elif menu == "7. Panel Manajemen Pakar":
@@ -258,13 +324,15 @@ elif menu == "7. Panel Manajemen Pakar":
             if username == "admin" and password == "pakar123":
                 st.session_state.logged_in = True
                 st.rerun()
+            else:
+                st.error("Kombinasi Username atau Password salah!")
     else:
         st.success("🔓 Mode Admin Aktif")
         if st.button("Keluar"):
             st.session_state.logged_in = False
             st.rerun()
         st.divider()
-        st.caption("Sesuaikan CF (Bobot Kepastian Pakar) untuk setiap diagnosis.")
+        st.caption("Sesuaikan CF (Bobot Kepastian Pakar) untuk setiap diagnosis gejala dari dataset.")
         edited_symptoms = st.data_editor(st.session_state.rules_symptoms, num_rows="dynamic")
         if st.button("Simpan Aturan"):
             st.session_state.rules_symptoms = edited_symptoms
