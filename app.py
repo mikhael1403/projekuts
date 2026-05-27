@@ -8,7 +8,6 @@ st.set_page_config(page_title="NutriExpert CF System", layout="wide", initial_si
 # 1. INITIALIZE DATASETS & STATE
 # =========================================================================
 
-# Load dataset standard-nutrition.csv
 @st.cache_data
 def load_nutrition_standards():
     try:
@@ -17,7 +16,6 @@ def load_nutrition_standards():
         st.error("File 'standard-nutrition.csv' tidak ditemukan.")
         return pd.DataFrame()
 
-# Load dataset foods.csv
 @st.cache_data
 def load_food_data():
     try:
@@ -42,7 +40,6 @@ if 'food_df' not in st.session_state:
     else:
         st.session_state.food_df = pd.DataFrame([{"Nama Makanan": "Data Kosong", "Energy (kJ)": 0, "Carbohydrates (g)": 0, "Protein (g)": 0, "Dietary Fiber (g)": 0, "Vitamin C (mg)": 0, "Iron (mg)": 0}])
 
-# Aturan Pakar (Rule Base) Berdasarkan Gejala Klinis
 if 'rules_symptoms' not in st.session_state:
     st.session_state.rules_symptoms = pd.DataFrame([
         {"Kode": "R001", "Gejala": "Gusi Berdarah", "Diagnosis": "Kekurangan Vitamin C", "CF_Pakar": 0.8},
@@ -54,7 +51,6 @@ if 'rules_symptoms' not in st.session_state:
         {"Kode": "R010", "Gejala": "Otot Menyusut / Lemah", "Diagnosis": "Kekurangan Protein", "CF_Pakar": 0.7}
     ])
 
-# Aturan Pakar untuk Analisis Defisit
 if 'rules_intake' not in st.session_state:
     st.session_state.rules_intake = pd.DataFrame([
         {"Defisit": "Kekurangan Dietary Fiber (g) > 50%", "Prediksi_Dampak": "Sembelit & Gangguan Pencernaan", "CF_Pakar": 0.85},
@@ -63,7 +59,6 @@ if 'rules_intake' not in st.session_state:
         {"Defisit": "Kekurangan Iron (mg) > 30%", "Prediksi_Dampak": "Mudah Lelah & Kurang Konsentrasi", "CF_Pakar": 0.65}
     ])
 
-# Acuan AKG dari standard-nutrition.csv
 AKG = {}
 if not std_nutrition_df.empty:
     for index, row in std_nutrition_df.dropna(subset=['Minimum']).iterrows():
@@ -115,7 +110,7 @@ elif menu == "2. Rekomendasi Makanan (CF Engine)":
     available_nutrients = [col for col in st.session_state.food_df.columns if col not in ["Unnamed: 0", "Nama Makanan"]]
     gizi_pilihan = st.selectbox("Nutrisi yang ingin dipenuhi:", available_nutrients, index=available_nutrients.index("Iron (mg)") if "Iron (mg)" in available_nutrients else 0)
     
-    target_akg = AKG.get(gizi_pilihan, 10.0) # Ambil target standar
+    target_akg = AKG.get(gizi_pilihan, 10.0)
     st.info(f"Target minimal harian untuk **{gizi_pilihan}** adalah **{target_akg}**.")
 
     if st.button("Hitung CF Rekomendasi"):
@@ -123,10 +118,8 @@ elif menu == "2. Rekomendasi Makanan (CF Engine)":
         for _, row in st.session_state.food_df.iterrows():
             nilai_gizi = float(row.get(gizi_pilihan, 0))
             if nilai_gizi > 0:
-                # Menghitung CF: Rasio kandungan terhadap target AKG (Maksimal 1.0 atau 100%)
                 cf_score = min(nilai_gizi / target_akg, 1.0) 
                 
-                # Hanya ambil yang CF nya diatas 0.1 (10%)
                 if cf_score >= 0.1:
                     recommendations.append({
                         "Nama Makanan": row["Nama Makanan"],
@@ -139,7 +132,6 @@ elif menu == "2. Rekomendasi Makanan (CF Engine)":
             rec_df = pd.DataFrame(recommendations).sort_values(by="Skor CF", ascending=False).head(20)
             
             st.success(f"Ditemukan {len(recommendations)} makanan penunjang. Berikut Top 20 Makanan Terbaik:")
-            # Menampilkan progress bar visual untuk CF
             st.dataframe(
                 rec_df[["Nama Makanan", f"Kandungan {gizi_pilihan}", "Keyakinan Sistem"]],
                 use_container_width=True
@@ -218,7 +210,7 @@ elif menu == "4. Analisis Menu Harian (CF)":
                 st.warning(f"Risiko {dampak} | CF Kemungkinan: {score*100:.2f}%")
 
 # ----------------- HALAMAN 5: KAMUS DAMPAK MALNUTRISI -----------------
-elif menu == "5. Kamus Dampak Malnutrisi (Dari Dataset)":
+elif menu == "5. Kamus Dampak Malnutrisi":
     st.title("📚 5. Kamus Dampak Malnutrisi (Katalog Edukasi)")
     st.write("Daftar katalog medis komprehensif berdasarkan standar nutrisi.")
     
@@ -237,7 +229,7 @@ elif menu == "5. Kamus Dampak Malnutrisi (Dari Dataset)":
         st.warning("Dataset standard-nutrition.csv belum dimuat.")
 
 # ----------------- HALAMAN 6: PANEL ADMIN (MANAJEMEN PAKAR) -----------------
-elif menu == "6. Panel Manajemen Pakar (Admin)":
+elif menu == "6. Panel Manajemen Pakar":
     st.title("🛠️ 6. Panel Manajemen Aturan Pakar (Autentikasi Admin)")
     
     if not st.session_state.logged_in:
@@ -270,4 +262,3 @@ elif menu == "6. Panel Manajemen Pakar (Admin)":
             st.session_state.rules_symptoms = edited_symptoms
             st.session_state.rules_intake = edited_intake
             st.success("✅ Sukses! Seluruh basis aturan pakar berhasil di-update ke dalam memori aplikasi.")
-
