@@ -142,7 +142,7 @@ elif menu == "Rekomendasi Makanan":
 
 # ----------------- HALAMAN 3: DIAGNOSIS GEJALA (CF ENGINE) -----------------
 elif menu == "Diagnosis Gejala":
-    st.title("3. Sistem Pakar Diagnosa Malnutrisi Berdasarkan Gejala")
+    st.title("Sistem Pakar Diagnosa Malnutrisi Berdasarkan Gejala")
     unique_symptoms = st.session_state.rules_symptoms["Gejala"].unique()
     user_inputs = {}
     
