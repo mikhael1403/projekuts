@@ -9,7 +9,7 @@ backgroundColor = "#6126AD"
 secondaryBackgroundColor = "#f1f8f4"
 
 # Warna teks utama
-textColor = "#2c3e50"
+textColor = "bbbbbb"
 
 # Pilihan font: "sans serif", "serif", atau "monospace"
 font = "sans serif"
