@@ -1,4 +1,4 @@
-Unnamed: 0,Nutrisi,Minimum,Maximum,Dampak Kelebihan,Dampak Kekurangan,Fungsi Zat,Rekomendasi Harian Anak (1-5 tahun)
+ID,Nutrisi,Minimum,Maximum,Dampak Kelebihan,Dampak Kekurangan,Fungsi Zat,Rekomendasi Harian Anak (1-5 tahun)
 0,Energy (kJ),4000,5000,"Obesitas, penyakit jantung, diabetes","Kelelahan, penurunan berat badan",Sumber energi bagi tubuh,4000-5000 kJ
 1,Protein (g),13,20,"Gangguan ginjal, dehidrasi","Stunting, sistem imun yang lemah","Memperbaiki jaringan, pertumbuhan otot",13-20 g
 2,Fat (g),,,"Penyakit jantung, obesitas","Kulit kering, gangguan penyerapan vitamin","Sumber energi, penyerapan vitamin larut lemak",30-35% of total daily calories
