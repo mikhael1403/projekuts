@@ -85,7 +85,7 @@ menu = st.sidebar.radio("Pilih Halaman Aplikasi:", [
 ])
 
 # ----------------- HALAMAN 1: ENSIKLOPEDIA GIZI -----------------
-if menu == "Ensiklopedia Gizi":
+if menu == "1. Ensiklopedia Gizi":
     st.title("1. Ensiklopedia Data Kandungan Gizi Makanan")
     st.write(f"Dataset berisi **{len(st.session_state.food_df)} bahan pangan**.")
     
@@ -103,9 +103,9 @@ if menu == "Ensiklopedia Gizi":
     st.dataframe(st.session_state.food_df, use_container_width=True)
 
 # ----------------- HALAMAN 2: REKOMENDASI CF -----------------
-elif menu == "Rekomendasi Makanan (CF Engine)":
-    st.title("Sistem Rekomendasi Makanan")
-    st.write("Sistem akan menghitung tingkat keyakinan sebuah makanan dalam memenuhi kebutuhan nutrisi harian Anda")
+elif menu == "2. Rekomendasi Makanan (CF Engine)":
+    st.title("2. Sistem Rekomendasi Makanan (Certainty Factor)")
+    st.write("Sistem akan menghitung tingkat keyakinan (CF) sebuah makanan dalam memenuhi kebutuhan nutrisi harian Anda berdasarkan dataset `foods.csv`.")
     
     available_nutrients = [col for col in st.session_state.food_df.columns if col not in ["Unnamed: 0", "Nama Makanan"]]
     gizi_pilihan = st.selectbox("Nutrisi yang ingin dipenuhi:", available_nutrients, index=available_nutrients.index("Iron (mg)") if "Iron (mg)" in available_nutrients else 0)
@@ -113,7 +113,7 @@ elif menu == "Rekomendasi Makanan (CF Engine)":
     target_akg = AKG.get(gizi_pilihan, 10.0)
     st.info(f"Target minimal harian untuk **{gizi_pilihan}** adalah **{target_akg}**.")
 
-    if st.button("Hitung Rekomendasi"):
+    if st.button("Hitung CF Rekomendasi"):
         recommendations = []
         for _, row in st.session_state.food_df.iterrows():
             nilai_gizi = float(row.get(gizi_pilihan, 0))
@@ -141,8 +141,8 @@ elif menu == "Rekomendasi Makanan (CF Engine)":
             st.warning("Tidak ada makanan yang signifikan mengandung nutrisi tersebut di dalam dataset.")
 
 # ----------------- HALAMAN 3: DIAGNOSIS GEJALA (CF ENGINE) -----------------
-elif menu == "Diagnosis Gejala":
-    st.title("Sistem Pakar Diagnosa Malnutrisi Berdasarkan Gejala")
+elif menu == "3. Diagnosis Gejala (CF)":
+    st.title("3. Sistem Pakar Diagnosa Malnutrisi Berdasarkan Gejala")
     unique_symptoms = st.session_state.rules_symptoms["Gejala"].unique()
     user_inputs = {}
     
@@ -174,8 +174,8 @@ elif menu == "Diagnosis Gejala":
                     st.progress(float(max(0.0, min(score, 1.0))))
 
 # ----------------- HALAMAN 4: ANALISIS MENU HARIAN (CF ENGINE) -----------------
-elif menu == "Analisis Menu Harian":
-    st.title("Evaluasi Menu Konsumsi Harian")
+elif menu == "4. Analisis Menu Harian (CF)":
+    st.title("4. Evaluasi Menu Konsumsi Harian (Dataset Foods.csv)")
     
     selected_items = st.multiselect("Pilih seluruh menu makanan Anda:", st.session_state.food_df["Nama Makanan"].unique())
     if selected_items:
@@ -210,8 +210,8 @@ elif menu == "Analisis Menu Harian":
                 st.warning(f"Risiko {dampak} | CF Kemungkinan: {score*100:.2f}%")
 
 # ----------------- HALAMAN 5: KAMUS DAMPAK MALNUTRISI -----------------
-elif menu == "Kamus Dampak Malnutrisi":
-    st.title("Kamus Dampak Malnutrisi (Katalog Edukasi)")
+elif menu == "5. Kamus Dampak Malnutrisi":
+    st.title("5. Kamus Dampak Malnutrisi (Katalog Edukasi)")
     st.write("Daftar katalog medis komprehensif berdasarkan standar nutrisi.")
     
     if not std_nutrition_df.empty:
@@ -229,8 +229,8 @@ elif menu == "Kamus Dampak Malnutrisi":
         st.warning("Dataset standard-nutrition.csv belum dimuat.")
 
 # ----------------- HALAMAN 6: PANEL ADMIN (MANAJEMEN PAKAR) -----------------
-elif menu == "Panel Manajemen Pakar":
-    st.title("Panel Manajemen Aturan Pakar (Autentikasi Admin)")
+elif menu == "6. Panel Manajemen Pakar":
+    st.title("6. Panel Manajemen Aturan Pakar (Autentikasi Admin)")
     
     if not st.session_state.logged_in:
         st.subheader("Silakan Login Terlebih Dahulu")
