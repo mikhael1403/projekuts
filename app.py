@@ -7,19 +7,31 @@ st.set_page_config(page_title="NutriExpert CF System", layout="wide", initial_si
 # =========================================================================
 # 1. INITIALIZE DATASET & STATE (Disimpan di memori agar bisa diubah Admin)
 # =========================================================================
+
+# Load dataset standard-nutrition.csv
+@st.cache_data
+def load_nutrition_data():
+    try:
+        return pd.read_csv("standard-nutrition.csv")
+    except FileNotFoundError:
+        st.error("File 'standard-nutrition.csv' tidak ditemukan. Pastikan file berada di direktori yang sama.")
+        return pd.DataFrame()
+
+std_nutrition_df = load_nutrition_data()
+
 if 'logged_in' not in st.session_state:
     st.session_state.logged_in = False
 
 # Dataset Utama Gizi Makanan (Untuk Halaman 1, 2, dan 4)
 if 'food_df' not in st.session_state:
     st.session_state.food_df = pd.DataFrame([
-        {"Nama Makanan": "Nasi Putih", "Kalori (kcal)": 130, "Karbohidrat (g)": 28.0, "Protein (g)": 2.7, "Serat (g)": 0.4, "Vitamin C (mg)": 0.0, "Zat Besi (mg)": 1.2},
-        {"Nama Makanan": "Dada Ayam", "Kalori (kcal)": 165, "Karbohidrat (g)": 0.0, "Protein (g)": 31.0, "Serat (g)": 0.0, "Vitamin C (mg)": 0.0, "Zat Besi (mg)": 1.0},
-        {"Nama Makanan": "Tempe Goreng", "Kalori (kcal)": 193, "Karbohidrat (g)": 9.0, "Protein (g)": 19.0, "Serat (g)": 1.4, "Vitamin C (mg)": 0.0, "Zat Besi (mg)": 2.7},
-        {"Nama Makanan": "Telur Rebus", "Kalori (kcal)": 155, "Karbohidrat (g)": 1.1, "Protein (g)": 13.0, "Serat (g)": 0.0, "Vitamin C (mg)": 0.0, "Zat Besi (mg)": 1.2},
-        {"Nama Makanan": "Bayam Rebus", "Kalori (kcal)": 23, "Karbohidrat (g)": 4.0, "Protein (g)": 3.0, "Serat (g)": 2.4, "Vitamin C (mg)": 10.0, "Zat Besi (mg)": 3.5},
-        {"Nama Makanan": "Jeruk", "Kalori (kcal)": 47, "Karbohidrat (g)": 12.0, "Protein (g)": 0.9, "Serat (g)": 2.4, "Vitamin C (mg)": 53.2, "Zat Besi (mg)": 0.1},
-        {"Nama Makanan": "Susu Sapi", "Kalori (kcal)": 42, "Karbohidrat (g)": 5.0, "Protein (g)": 3.4, "Serat (g)": 0.0, "Vitamin C (mg)": 0.0, "Zat Besi (mg)": 0.1}
+        {"Nama Makanan": "Nasi Putih", "Energy (kJ)": 544, "Carbohydrates (g)": 28.0, "Protein (g)": 2.7, "Dietary Fiber (g)": 0.4, "Vitamin C (mg)": 0.0, "Iron (mg)": 1.2},
+        {"Nama Makanan": "Dada Ayam", "Energy (kJ)": 690, "Carbohydrates (g)": 0.0, "Protein (g)": 31.0, "Dietary Fiber (g)": 0.0, "Vitamin C (mg)": 0.0, "Iron (mg)": 1.0},
+        {"Nama Makanan": "Tempe Goreng", "Energy (kJ)": 807, "Carbohydrates (g)": 9.0, "Protein (g)": 19.0, "Dietary Fiber (g)": 1.4, "Vitamin C (mg)": 0.0, "Iron (mg)": 2.7},
+        {"Nama Makanan": "Telur Rebus", "Energy (kJ)": 648, "Carbohydrates (g)": 1.1, "Protein (g)": 13.0, "Dietary Fiber (g)": 0.0, "Vitamin C (mg)": 0.0, "Iron (mg)": 1.2},
+        {"Nama Makanan": "Bayam Rebus", "Energy (kJ)": 96, "Carbohydrates (g)": 4.0, "Protein (g)": 3.0, "Dietary Fiber (g)": 2.4, "Vitamin C (mg)": 10.0, "Iron (mg)": 3.5},
+        {"Nama Makanan": "Jeruk", "Energy (kJ)": 196, "Carbohydrates (g)": 12.0, "Protein (g)": 0.9, "Dietary Fiber (g)": 2.4, "Vitamin C (mg)": 53.2, "Iron (mg)": 0.1},
+        {"Nama Makanan": "Susu Sapi", "Energy (kJ)": 175, "Carbohydrates (g)": 5.0, "Protein (g)": 3.4, "Dietary Fiber (g)": 0.0, "Vitamin C (mg)": 0.0, "Iron (mg)": 0.1}
     ])
 
 # Aturan Pakar (Rule Base) Berdasarkan Gejala Klinis (Untuk Halaman 3)
@@ -40,14 +52,29 @@ if 'rules_symptoms' not in st.session_state:
 # Aturan Pakar untuk Analisis Defisit Asupan Harian (Untuk Halaman 4)
 if 'rules_intake' not in st.session_state:
     st.session_state.rules_intake = pd.DataFrame([
-        {"Defisit": "Kekurangan Serat > 50%", "Prediksi_Dampak": "Sembelit & Gangguan Pencernaan", "CF_Pakar": 0.85},
-        {"Defisit": "Kekurangan Protein > 40%", "Prediksi_Dampak": "Katabolisme Otot & Imunitas Turun", "CF_Pakar": 0.75},
-        {"Defisit": "Kekurangan Vitamin C > 50%", "Prediksi_Dampak": "Penurunan Imunitas & Sariawan", "CF_Pakar": 0.70},
-        {"Defisit": "Kekurangan Zat Besi > 30%", "Prediksi_Dampak": "Mudah Lelah & Kurang Konsentrasi", "CF_Pakar": 0.65}
+        {"Defisit": "Kekurangan Dietary Fiber (g) > 50%", "Prediksi_Dampak": "Sembelit & Gangguan Pencernaan", "CF_Pakar": 0.85},
+        {"Defisit": "Kekurangan Protein (g) > 40%", "Prediksi_Dampak": "Katabolisme Otot & Imunitas Turun", "CF_Pakar": 0.75},
+        {"Defisit": "Kekurangan Vitamin C (mg) > 50%", "Prediksi_Dampak": "Penurunan Imunitas & Sariawan", "CF_Pakar": 0.70},
+        {"Defisit": "Kekurangan Iron (mg) > 30%", "Prediksi_Dampak": "Mudah Lelah & Kurang Konsentrasi", "CF_Pakar": 0.65}
     ])
 
-# Acuan Angka Kecukupan Gizi (AKG) standar harian sehat harian
-AKG = {"Kalori (kcal)": 2000, "Karbohidrat (g)": 300, "Protein (g)": 60, "Serat (g)": 30, "Vitamin C (mg)": 90, "Zat Besi (mg)": 15}
+# Acuan Angka Kecukupan Gizi (AKG) dibuat dari nilai Minimum dataset yang diupload
+AKG = {}
+if not std_nutrition_df.empty:
+    for index, row in std_nutrition_df.dropna(subset=['Minimum']).iterrows():
+        nutrisi = row['Nutrisi']
+        minimum = row['Minimum']
+        AKG[nutrisi] = float(minimum)
+
+# Default fallback jika tidak ada data dari CSV untuk metrik menu 4
+fallback_akg = {
+    "Energy (kJ)": 4000.0, "Carbohydrates (g)": 130.0, 
+    "Protein (g)": 13.0, "Dietary Fiber (g)": 14.0, 
+    "Vitamin C (mg)": 15.0, "Iron (mg)": 7.0
+}
+for k, v in fallback_akg.items():
+    if k not in AKG:
+        AKG[k] = v
 
 # Pilihan Skala Keyakinan Gejala oleh Pengguna (CF User)
 cf_options = {
@@ -68,7 +95,7 @@ menu = st.sidebar.radio("Pilih Halaman Aplikasi:", [
     "2. Filter Rekomendasi Makanan",
     "3. Diagnosis Gejala (CF)",
     "4. Analisis Menu Harian (CF)",
-    "5. Kamus Penyakit Malnutrisi",
+    "5. Kamus Dampak Malnutrisi (Dari Dataset)",
     "6. Panel Manajemen Pakar (Admin)"
 ])
 
@@ -82,16 +109,16 @@ if menu == "1. Ensiklopedia Gizi":
     
     col1, col2, col3 = st.columns(3)
     with col1:
-        st.metric("🔥 Kalori", f"{food_data['Kalori (kcal)']} kcal")
-        st.metric("🍞 Karbohidrat", f"{food_data['Karbohidrat (g)']} g")
+        st.metric("🔥 Energi", f"{food_data['Energy (kJ)']} kJ")
+        st.metric("🍞 Karbohidrat", f"{food_data['Carbohydrates (g)']} g")
     with col2:
         st.metric("💪 Protein", f"{food_data['Protein (g)']} g")
-        st.metric("🥦 Serat", f"{food_data['Serat (g)']} g")
+        st.metric("🥦 Serat", f"{food_data['Dietary Fiber (g)']} g")
     with col3:
         st.metric("🍊 Vitamin C", f"{food_data['Vitamin C (mg)']} mg")
-        st.metric("🩸 Zat Besi", f"{food_data['Zat Besi (mg)']} mg")
+        st.metric("🩸 Zat Besi", f"{food_data['Iron (mg)']} mg")
 
-    st.subheader("📋 Seluruh Tabel Dataset Gizi")
+    st.subheader("📋 Seluruh Tabel Dataset Makanan")
     st.dataframe(st.session_state.food_df, use_container_width=True)
 
 # ----------------- HALAMAN 2: FILTER REKOMENDASI -----------------
@@ -99,14 +126,14 @@ elif menu == "2. Filter Rekomendasi Makanan":
     st.title("🔍 2. Rekomendasi Balik: Cari Makanan Berdasarkan Kebutuhan Nutrisi")
     st.write("Masukkan target zat gizi tertentu untuk menampilkan jenis makanan penunjang terbaik.")
     
-    gizi_pilihan = st.selectbox("Saya membutuhkan makanan yang tinggi:", ["Protein (g)", "Karbohidrat (g)", "Serat (g)", "Vitamin C (mg)", "Zat Besi (mg)"])
+    gizi_pilihan = st.selectbox("Saya membutuhkan makanan yang tinggi:", ["Protein (g)", "Carbohydrates (g)", "Dietary Fiber (g)", "Vitamin C (mg)", "Iron (mg)"])
     min_val = st.slider("Batas Minimal Kandungan Gizi per porsi:", 0.0, 60.0, 5.0)
     
     filtered_df = st.session_state.food_df[st.session_state.food_df[gizi_pilihan] >= min_val].sort_values(by=gizi_pilihan, ascending=False)
     
     if not filtered_df.empty:
         st.success(f"Berhasil menemukan {len(filtered_df)} opsi makanan yang cocok!")
-        st.dataframe(filtered_df[["Nama Makanan", gizi_pilihan, "Kalori (kcal)"]], use_container_width=True)
+        st.dataframe(filtered_df[["Nama Makanan", gizi_pilihan, "Energy (kJ)"]], use_container_width=True)
     else:
         st.warning("Data belum ditemukan. Coba geser batas minimal kandungan gizi ke arah kiri.")
 
@@ -140,11 +167,9 @@ elif menu == "3. Diagnosis Gejala (CF)":
                     if s_name in active_inputs:
                         cf_user = active_inputs[s_name]
                         cf_pakar = rule["CF_Pakar"]
-                        # Rumus CF Tunggal: CF[H,E] = CF[E] * CF[Pakar]
                         cf_list.append(cf_user * cf_pakar)
                 
                 if cf_list:
-                    # Rumus Kombinasi Paralel CF Combine
                     cf_combine = cf_list[0]
                     for cf_next in cf_list[1:]:
                         if cf_combine >= 0 and cf_next >= 0:
@@ -164,52 +189,52 @@ elif menu == "3. Diagnosis Gejala (CF)":
 # ----------------- HALAMAN 4: ANALISIS MENU HARIAN (CF ENGINE) -----------------
 elif menu == "4. Analisis Menu Harian (CF)":
     st.title("🍽️ 4. Evaluasi & Prediksi Risiko Menu Konsumsi Harian")
-    st.write("Masukkan daftar makanan yang Anda konsumsi hari ini untuk mengukur potensi defisit kritis.")
+    st.write("Masukkan daftar makanan yang Anda konsumsi hari ini untuk mengukur potensi defisit kritis berdasarkan Standar Nutrisi.")
     
     selected_items = st.multiselect("Pilih seluruh menu makanan Anda sejak pagi:", st.session_state.food_df["Nama Makanan"].unique())
     
     if selected_items:
-        summary_gizi = {"Kalori (kcal)": 0.0, "Karbohidrat (g)": 0.0, "Protein (g)": 0.0, "Serat (g)": 0.0, "Vitamin C (mg)": 0.0, "Zat Besi (mg)": 0.0}
+        summary_gizi = {"Energy (kJ)": 0.0, "Carbohydrates (g)": 0.0, "Protein (g)": 0.0, "Dietary Fiber (g)": 0.0, "Vitamin C (mg)": 0.0, "Iron (mg)": 0.0}
         
         for item in selected_items:
             row = st.session_state.food_df[st.session_state.food_df["Nama Makanan"] == item].iloc[0]
             for key in summary_gizi.keys():
                 summary_gizi[key] += row[key]
                 
-        st.subheader("Total Asupan Nutrisi Masuk")
+        st.subheader("Total Asupan Nutrisi Masuk (Vs Target Minimal)")
         col1, col2, col3 = st.columns(3)
         with col1:
-            st.metric("🔥 Kalori", f"{summary_gizi['Kalori (kcal)']:.1f} / {AKG['Kalori (kcal)']} kcal")
-            st.metric("🍞 Karbohidrat", f"{summary_gizi['Karbohidrat (g)']:.1f} / {AKG['Karbohidrat (g)']} g")
+            st.metric("🔥 Energi", f"{summary_gizi['Energy (kJ)']:.1f} / {AKG['Energy (kJ)']} kJ")
+            st.metric("🍞 Karbohidrat", f"{summary_gizi['Carbohydrates (g)']:.1f} / {AKG['Carbohydrates (g)']} g")
         with col2:
             st.metric("💪 Protein", f"{summary_gizi['Protein (g)']:.1f} / {AKG['Protein (g)']} g")
-            st.metric("🥦 Serat", f"{summary_gizi['Serat (g)']:.1f} / {AKG['Serat (g)']} g")
+            st.metric("🥦 Serat", f"{summary_gizi['Dietary Fiber (g)']:.1f} / {AKG['Dietary Fiber (g)']} g")
         with col3:
             st.metric("🍊 Vitamin C", f"{summary_gizi['Vitamin C (mg)']:.1f} / {AKG['Vitamin C (mg)']} mg")
-            st.metric("🩸 Zat Besi", f"{summary_gizi['Zat Besi (mg)']:.1f} / {AKG['Zat Besi (mg)']} mg")
+            st.metric("🩸 Zat Besi", f"{summary_gizi['Iron (mg)']:.1f} / {AKG['Iron (mg)']} mg")
             
-        # Mengonversi besaran nilai defisit menjadi CF User (Skala 0 sampai 1)
+        # Defisit diukur dari target AKG (Menggunakan dataset standard-nutrition)
         cf_user_deficits = {}
         
-        pct_serat = summary_gizi["Serat (g)"] / AKG["Serat (g)"]
+        pct_serat = summary_gizi["Dietary Fiber (g)"] / AKG["Dietary Fiber (g)"]
         if pct_serat < 0.5:
-            cf_user_deficits["Kekurangan Serat > 50%"] = 1.0 - pct_serat
+            cf_user_deficits["Kekurangan Dietary Fiber (g) > 50%"] = 1.0 - pct_serat
             
         pct_protein = summary_gizi["Protein (g)"] / AKG["Protein (g)"]
         if pct_protein < 0.6:
-            cf_user_deficits["Kekurangan Protein > 40%"] = 1.0 - pct_protein
+            cf_user_deficits["Kekurangan Protein (g) > 40%"] = 1.0 - pct_protein
             
         pct_vit_c = summary_gizi["Vitamin C (mg)"] / AKG["Vitamin C (mg)"]
         if pct_vit_c < 0.5:
-            cf_user_deficits["Kekurangan Vitamin C > 50%"] = 1.0 - pct_vit_c
+            cf_user_deficits["Kekurangan Vitamin C (mg) > 50%"] = 1.0 - pct_vit_c
             
-        pct_iron = summary_gizi["Zat Besi (mg)"] / AKG["Zat Besi (mg)"]
+        pct_iron = summary_gizi["Iron (mg)"] / AKG["Iron (mg)"]
         if pct_iron < 0.7:
-            cf_user_deficits["Kekurangan Zat Besi > 30%"] = 1.0 - pct_iron
+            cf_user_deficits["Kekurangan Iron (mg) > 30%"] = 1.0 - pct_iron
             
         st.subheader("🔮 Prediksi Dampak Kesehatan Masa Depan")
         if not cf_user_deficits:
-            st.success("Sempurna! Asupan makanan hari ini aman dan memenuhi ambang batas aman gizi.")
+            st.success("Sempurna! Asupan makanan hari ini aman dan memenuhi ambang batas aman gizi minimal.")
         else:
             predictions = []
             for _, rule in st.session_state.rules_intake.iterrows():
@@ -222,23 +247,24 @@ elif menu == "4. Analisis Menu Harian (CF)":
             for dampak, score in sorted(predictions, key=lambda x: x[1], reverse=True):
                 st.warning(f"Risiko {dampak} | Kemungkinan Terjadi: {score*100:.2f}%")
 
-# ----------------- HALAMAN 5: KAMUS PENYAKIT MALNUTRISI (DARURAT) -----------------
-elif menu == "5. Kamus Penyakit Malnutrisi":
-    st.title("📚 5. Kamus Penyakit Akibat Malnutrisi (Katalog Edukasi)")
-    st.write("Daftar katalog medis komprehensif jika pengguna membutuhkan informasi penyakit akibat kekurangan gizi harian secara instan.")
+# ----------------- HALAMAN 5: KAMUS DAMPAK MALNUTRISI -----------------
+elif menu == "5. Kamus Dampak Malnutrisi (Dari Dataset)":
+    st.title("📚 5. Kamus Dampak Malnutrisi (Katalog Edukasi)")
+    st.write("Daftar katalog medis komprehensif berdasarkan standar nutrisi.")
     
-    kamus_data = [
-        {"Penyakit": "Skorbut (Scurvy)", "Penyebab": "Defisit Vitamin C Kronis dalam jangka panjang", "Gejala Umum": "Gusi berdarah parah, memar spontan, penyembuhan luka sangat lambat.", "Pencegahan Makanan": "Buah jeruk, jambu biji, stroberi, paprika harian."},
-        {"Penyakit": "Anemia Defisiensi Besi", "Penyebab": "Kekurangan Zat Besi pengikat hemoglobin darah", "Gejala Umum": "Letih berkepanjangan, wajah pucat, konsentrasi menurun drastic.", "Pencegahan Makanan": "Daging merah, hati sapi/ayam, sayur bayam, kacang merah."},
-        {"Penyakit": "Xerophthalmia", "Penyebab": "Defisit akut Vitamin A hewani/nabati", "Gejala Umum": "Rabun ayam saat petang hari, mata kering ekstrem, bercak bitot kornea.", "Pencegahan Makanan": "Wortel, ubi jalar jepang, minyak hati ikan kod, kuning telur."},
-        {"Penyakit": "Kwashiorkor & Marasmus", "Penyebab": "Kekurangan asupan Protein makro dan Kalori ekstrem", "Gejala Umum": "Otot atrofi (habis), penumpukan cairan perut busung, rambut memerah rapuh.", "Pencegahan Makanan": "Dada ayam filat, susu sapi murni, ikan kembung, tahu tempe telur."},
-        {"Penyakit": "Konstipasi Kronis", "Penyebab": "Kekurangan serat selulosa tumbuhan dan air", "Gejala Umum": "Sakit perut bagian bawah, buang air besar keras kurang dari 3x seminggu.", "Pencegahan Makanan": "Buah pepaya masak, oatmeal gandum utuh, biji chia, sayur hijau."}
-    ]
-    
-    for penyakit in kamus_data:
-        with st.expander(f"🔴 {penyakit['Penyakit']} (Akibat {penyakit['Penyebab']})"):
-            st.write(f"Gejala Utama Fisik: {penyakit['Gejala Umum']}")
-            st.write(f"Bahan Pangan Pemulihan: {penyakit['Pencegahan Makanan']}")
+    if not std_nutrition_df.empty:
+        for _, row in std_nutrition_df.iterrows():
+            nutrisi = row['Nutrisi']
+            dampak_kurang = row['Dampak Kekurangan']
+            dampak_lebih = row['Dampak Kelebihan']
+            fungsi = row['Fungsi Zat']
+            
+            with st.expander(f"📌 {nutrisi}"):
+                st.write(f"**Fungsi Zat:** {fungsi}")
+                st.write(f"**⚠️ Dampak Kekurangan:** {dampak_kurang}")
+                st.write(f"**⚠️ Dampak Kelebihan:** {dampak_lebih}")
+    else:
+        st.warning("Dataset standard-nutrition.csv belum dimuat.")
 
 # ----------------- HALAMAN 6: PANEL ADMIN (MANAJEMEN PAKAR) -----------------
 elif menu == "6. Panel Manajemen Pakar (Admin)":
@@ -250,7 +276,6 @@ elif menu == "6. Panel Manajemen Pakar (Admin)":
         password = st.text_input("Password Admin:", type="password")
         
         if st.button("Masuk Ke Panel Kendali"):
-            # Kredensial default aman akun admin
             if username == "admin" and password == "pakar123":
                 st.session_state.logged_in = True
                 st.rerun()
@@ -266,7 +291,6 @@ elif menu == "6. Panel Manajemen Pakar (Admin)":
         st.subheader("✏️ Ubah Bobot Persentase CF Pakar (Modul Gejala - Halaman 3)")
         st.caption("Double klik pada kolom 'CF_Pakar' untuk mengubah angka keyakinan medis (rentang 0.0 s.d 1.0).")
         
-        # Fitur st.data_editor membuat dataset DataFrame dapat diedit langsung layaknya excel spreadsheet
         edited_symptoms = st.data_editor(st.session_state.rules_symptoms, num_rows="dynamic", key="editor_sym")
         
         st.subheader("✏️ Ubah Bobot Persentase CF Pakar (Modul Defisit Makan - Halaman 4)")
