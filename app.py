@@ -1,8 +1,3 @@
-Ini dia kode yang sudah dibersihkan. Masalah utama pada kode yang kamu berikan tadi adalah adanya karakter spasi yang tidak terlihat (disebut *non-breaking space* atau `\xa0`) akibat proses *copy-paste*, yang membuat Python error karena masalah indentasi (spasi tidak rata).
-
-Semua *spacing* sudah saya standarisasi ke 4-spasi normal, dan modifikasi kamu (penghapusan emoji & nomor) tetap saya pertahankan. Tinggal *copy-paste* langsung ke file Python kamu:
-
-```python
 import streamlit as st
 import pandas as pd
 
