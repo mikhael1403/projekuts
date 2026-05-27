@@ -1,8 +1,17 @@
 import streamlit as st
 import pandas as pd
+import numpy as np
+
+# Coba import sklearn untuk K-Means
+try:
+    from sklearn.cluster import KMeans
+    from sklearn.preprocessing import StandardScaler
+    HAS_SKLEARN = True
+except ImportError:
+    HAS_SKLEARN = False
 
 # Set konfigurasi layout halaman utama web
-st.set_page_config(page_title="NutriExpert CF System", layout="wide", initial_sidebar_state="expanded")
+st.set_page_config(page_title="NutriExpert AI & CF System", layout="wide", initial_sidebar_state="expanded")
 st.markdown("""
     <style>
     .stButton>button { border-radius: 20px; transition: all 0.3s; }
@@ -47,18 +56,13 @@ if 'food_df' not in st.session_state:
     else:
         st.session_state.food_df = pd.DataFrame([{"Nama Makanan": "Data Kosong", "Energy (kJ)": 0, "Carbohydrates (g)": 0, "Protein (g)": 0, "Dietary Fiber (g)": 0, "Vitamin C (mg)": 0, "Iron (mg)": 0}])
 
-# ----------------- AUTO-GENERATE RULES SYMPTOMS DARI CSV -----------------
 if 'rules_symptoms' not in st.session_state:
     auto_rules = []
     rule_idx = 1
     if not std_nutrition_df.empty:
-        # Looping dataset standar nutrisi
         for _, row in std_nutrition_df.dropna(subset=['Dampak Kekurangan']).iterrows():
-            # Bersihkan nama nutrisi dari kurung (mg/g)
             nutrisi = str(row['Nutrisi']).split(" (")[0]
-            # Pecah gejala berdasarkan koma
             gejala_list = str(row['Dampak Kekurangan']).split(',')
-            
             for g in gejala_list:
                 g_clean = g.strip().capitalize()
                 if g_clean and g_clean.lower() != "nan":
@@ -66,7 +70,7 @@ if 'rules_symptoms' not in st.session_state:
                         "Kode": f"R{rule_idx:03d}",
                         "Gejala": g_clean,
                         "Diagnosis": f"Kekurangan {nutrisi}",
-                        "CF_Pakar": 0.6  # Bobot kepastian medis default (Bisa diedit Admin)
+                        "CF_Pakar": 0.6 
                     })
                     rule_idx += 1
         st.session_state.rules_symptoms = pd.DataFrame(auto_rules)
@@ -86,28 +90,29 @@ if not std_nutrition_df.empty:
     for index, row in std_nutrition_df.dropna(subset=['Minimum']).iterrows():
         AKG[row['Nutrisi']] = float(row['Minimum'])
 
-fallback_akg = {"Energy (kJ)": 4000.0, "Carbohydrates (g)": 130.0, "Protein (g)": 13.0, "Dietary Fiber (g)": 14.0, "Vitamin C (mg)": 15.0, "Iron (mg)": 7.0}
-for k, v in fallback_akg.items():
-    if k not in AKG:
-        AKG[k] = v
-
 cf_options = {"Tidak Tahu": 0.0, "Gejala Ringan": 0.4, "Gejala Sedang": 0.7, "Gejala Berat": 1.0}
 
 # =========================================================================
 # 2. SIDEBAR NAVIGATION
 # =========================================================================
-st.sidebar.title("Nutrisi Balita")
+st.sidebar.title("Nutrisi AI & SPK")
 menu = st.sidebar.radio("Pilih Halaman Aplikasi:", [
-    "Ensiklopedia Gizi",
-    "Rekomendasi Makanan",
-    "Diagnosis Gejala",
-    "Analisis Menu Harian",
-    "Panel Manajemen Pakar" # Naik menjadi urutan ke 5
+    "1. Ensiklopedia Gizi",
+    "2. Rekomendasi Makanan (CF)",
+    "3. Diagnosis Gejala (CF)",
+    "4. Analisis Menu Harian",
+    "5. Clustering Makanan (K-Means)",
+    "6. Rekomendasi Pintar (TOPSIS)",
+    "7. Panel Manajemen Pakar"
 ])
 
-# ----------------- HALAMAN 1: ENSIKLOPEDIA GIZI -----------------
-if menu == "Ensiklopedia Gizi":
-    st.title("Ensiklopedia Data Kandungan Gizi Makanan")
+# Ambil list nutrisi numerik untuk pilihan filter
+available_nutrients = [col for col in st.session_state.food_df.columns if col not in ["Unnamed: 0", "Nama Makanan"] and pd.api.types.is_numeric_dtype(st.session_state.food_df[col])]
+
+
+# ----------------- HALAMAN 1 sampai 4 -----------------
+if menu == "1. Ensiklopedia Gizi":
+    st.title("📖 1. Ensiklopedia Data Kandungan Gizi Makanan")
     st.write(f"Dataset berisi **{len(st.session_state.food_df)} bahan pangan**.")
     
     selected_food = st.selectbox("Pilih Nama Makanan:", st.session_state.food_df["Nama Makanan"].unique())
@@ -120,17 +125,11 @@ if menu == "Ensiklopedia Gizi":
     col2.metric("Serat", f"{food_data.get('Dietary Fiber (g)', 0)} g")
     col3.metric("Vitamin C", f"{food_data.get('Vitamin C (mg)', 0)} mg")
     col3.metric("Zat Besi", f"{food_data.get('Iron (mg)', 0)} mg")
-
     st.dataframe(st.session_state.food_df, use_container_width=True)
 
-# ----------------- HALAMAN 2: REKOMENDASI CF -----------------
-elif menu == "Rekomendasi Makanan":
-    st.title("Sistem Rekomendasi Makanan")
-    st.write("Sistem akan menghitung tingkat keyakinan sebuah makanan dalam memenuhi kebutuhan nutrisi harian balita.")
-    
-    available_nutrients = [col for col in st.session_state.food_df.columns if col not in ["Unnamed: 0", "Nama Makanan"]]
+elif menu == "2. Rekomendasi Makanan (CF)":
+    st.title("🎯 2. Sistem Rekomendasi Makanan (Certainty Factor)")
     gizi_pilihan = st.selectbox("Nutrisi yang ingin dipenuhi:", available_nutrients, index=available_nutrients.index("Iron (mg)") if "Iron (mg)" in available_nutrients else 0)
-    
     target_akg = AKG.get(gizi_pilihan, 10.0)
     st.info(f"Target minimal harian untuk **{gizi_pilihan}** adalah **{target_akg}**.")
 
@@ -147,156 +146,170 @@ elif menu == "Rekomendasi Makanan":
                         "Skor CF": cf_score,
                         "Keyakinan Sistem": f"{cf_score * 100:.2f} %"
                     })
-        
         if recommendations:
             rec_df = pd.DataFrame(recommendations).sort_values(by="Skor CF", ascending=False).head(20)
             st.success(f"Ditemukan {len(recommendations)} makanan penunjang. Berikut Top 20 Makanan Terbaik:")
             st.dataframe(rec_df[["Nama Makanan", f"Kandungan {gizi_pilihan}", "Keyakinan Sistem"]], use_container_width=True)
-            st.caption("Catatan: Keyakinan 100% berarti 1 porsi makanan tersebut sudah cukup untuk memenuhi seluruh kebutuhan harian nutrisi yang dipilih.")
         else:
-            st.warning("Tidak ada makanan yang signifikan mengandung nutrisi tersebut di dalam dataset.")
+            st.warning("Tidak ada makanan yang memenuhi syarat.")
 
-# ----------------- HALAMAN 3: DIAGNOSIS GEJALA (CF ENGINE) -----------------
-elif menu == "Diagnosis Gejala":
-    st.title("Sistem Pakar Diagnosa Malnutrisi Berdasarkan Gejala")
-    st.write("Pilih keluhan fisik yang dialami untuk mengetahui potensi kekurangan nutrisi (Bersumber dari Data Medis Standar).")
-    
+elif menu == "3. Diagnosis Gejala (CF)":
+    st.title("🩺 3. Sistem Pakar Diagnosa Malnutrisi (CF Engine)")
     unique_symptoms = st.session_state.rules_symptoms["Gejala"].unique()
-    
-    # Memilih gejala menggunakan multiselect agar rapih (karena gejalanya sekarang ada banyak)
-    selected_symptoms = st.multiselect(
-        "1️⃣ Pilih Gejala Fisik (Bisa pilih lebih dari satu):", 
-        options=unique_symptoms,
-        placeholder="Ketik atau pilih gejala dari dataset..."
-    )
+    selected_symptoms = st.multiselect("1️⃣ Pilih Gejala Fisik:", options=unique_symptoms)
     
     if selected_symptoms:
         st.divider()
         st.subheader("2️⃣ Tentukan Tingkat Keparahan Gejala")
         user_inputs = {}
-        
         valid_cf_options = {k: v for k, v in cf_options.items() if v > 0.0}
         
-        # Hanya tampilkan pertanyaan untuk gejala yang dipilih saja
         for symptom in selected_symptoms:
-            user_inputs[symptom] = st.radio(
-                f"Seberapa parah kondisi '{symptom}'?", 
-                list(valid_cf_options.keys()), 
-                key=symptom,
-                horizontal=True
-            )
+            user_inputs[symptom] = st.radio(f"Seberapa parah '{symptom}'?", list(valid_cf_options.keys()), key=symptom, horizontal=True)
             
         if st.button("Proses Diagnosa Certainty Factor", type="primary"):
             active_inputs = {sym: valid_cf_options[val] for sym, val in user_inputs.items()}
-            
             diagnoses = st.session_state.rules_symptoms["Diagnosis"].unique()
             final_results = {}
-            
             for diag in diagnoses:
                 diag_rules = st.session_state.rules_symptoms[st.session_state.rules_symptoms["Diagnosis"] == diag]
-                cf_list = []
-                
-                for _, rule in diag_rules.iterrows():
-                    if rule["Gejala"] in active_inputs:
-                        cf_user = active_inputs[rule["Gejala"]]
-                        cf_pakar = rule["CF_Pakar"]
-                        cf_list.append(cf_user * cf_pakar)
-                
+                cf_list = [active_inputs[r["Gejala"]] * r["CF_Pakar"] for _, r in diag_rules.iterrows() if r["Gejala"] in active_inputs]
                 if cf_list:
-                    # Rumus Kombinasi Paralel Certainty Factor
                     cf_combine = cf_list[0]
                     for cf_next in cf_list[1:]:
                         cf_combine = cf_combine + cf_next * (1 - cf_combine)
-                    if cf_combine > 0.0:
-                        final_results[diag] = cf_combine
-            
+                    if cf_combine > 0.0: final_results[diag] = cf_combine
             if final_results:
                 st.divider()
-                st.subheader("📊 Hasil Diagnosa Kepastian Sistem Pakar")
                 sorted_results = sorted(final_results.items(), key=lambda x: x[1], reverse=True)
-                
                 top_diag, top_score = sorted_results[0]
-                st.success(f"🚨 **DIAGNOSIS UTAMA:** Kecenderungan tertinggi adalah **{top_diag}** ({top_score*100:.2f}%)")
-                
-                st.write("**Detail Risiko Kemungkinan Lainnya:**")
+                st.success(f"🚨 **DIAGNOSIS UTAMA:** {top_diag} ({top_score*100:.2f}%)")
                 for diag, score in sorted_results:
-                    percentage = score * 100
-                    if percentage >= 70:
-                        st.error(f"**{diag}** | {percentage:.2f}% (Risiko Tinggi)")
-                    elif percentage >= 40:
-                        st.warning(f"**{diag}** | {percentage:.2f}% (Risiko Sedang)")
-                    else:
-                        st.info(f"**{diag}** | {percentage:.2f}% (Risiko Rendah)")
+                    st.write(f"**{diag}** | {score*100:.2f}%")
                     st.progress(float(max(0.0, min(score, 1.0))))
 
-# ----------------- HALAMAN 4: ANALISIS MENU HARIAN (CF ENGINE) -----------------
-elif menu == "Analisis Menu Harian":
-    st.title("Evaluasi Menu Konsumsi Harian")
-    
+elif menu == "4. Analisis Menu Harian":
+    st.title("🍽️ 4. Evaluasi Menu Konsumsi Harian")
     selected_items = st.multiselect("Pilih seluruh menu makanan Anda:", st.session_state.food_df["Nama Makanan"].unique())
     if selected_items:
         summary_gizi = {"Energy (kJ)": 0.0, "Protein (g)": 0.0, "Dietary Fiber (g)": 0.0, "Vitamin C (mg)": 0.0, "Iron (mg)": 0.0}
-        
         for item in selected_items:
             row = st.session_state.food_df[st.session_state.food_df["Nama Makanan"] == item].iloc[0]
-            for key in summary_gizi.keys():
-                summary_gizi[key] += float(row.get(key, 0))
-                
-        col1, col2 = st.columns(2)
-        col1.metric("Protein", f"{summary_gizi['Protein (g)']:.1f} / {AKG['Protein (g)']} g")
-        col2.metric("Zat Besi", f"{summary_gizi['Iron (mg)']:.1f} / {AKG['Iron (mg)']} mg")
-            
-        cf_user_deficits = {}
-        pct_protein = summary_gizi["Protein (g)"] / AKG["Protein (g)"] if AKG["Protein (g)"] > 0 else 1.0
-        if pct_protein < 0.6: cf_user_deficits["Kekurangan Protein (g) > 40%"] = 1.0 - pct_protein
-            
-        pct_iron = summary_gizi["Iron (mg)"] / AKG["Iron (mg)"] if AKG["Iron (mg)"] > 0 else 1.0
-        if pct_iron < 0.7: cf_user_deficits["Kekurangan Iron (mg) > 30%"] = 1.0 - pct_iron
-            
-        st.subheader("Prediksi CF Dampak Defisit Nutrisi")
-        if not cf_user_deficits:
-            st.success("Aman! Menu makanan memenuhi standar gizi.")
-        else:
-            predictions = []
-            for _, rule in st.session_state.rules_intake.iterrows():
-                if rule["Defisit"] in cf_user_deficits:
-                    cf_u = cf_user_deficits[rule["Defisit"]]
-                    predictions.append((rule["Prediksi_Dampak"], cf_u * rule["CF_Pakar"]))
-            for dampak, score in sorted(predictions, key=lambda x: x[1], reverse=True):
-                st.warning(f"Risiko {dampak} | CF Kemungkinan: {score*100:.2f}%")
+            for key in summary_gizi.keys(): summary_gizi[key] += float(row.get(key, 0))
+        st.write(f"**Total Protein:** {summary_gizi['Protein (g)']:.1f}g | **Total Zat Besi:** {summary_gizi['Iron (mg)']:.1f}mg")
 
-# ----------------- HALAMAN 5: PANEL ADMIN (MANAJEMEN PAKAR) -----------------
-elif menu == "Panel Manajemen Pakar":
-    st.title("Panel Manajemen Aturan Pakar")
-    st.write("Di sini Admin bisa menyesuaikan bobot kepastian medis dari gejala yang telah diekstrak otomatis.")
+# ----------------- HALAMAN 5: K-MEANS CLUSTERING -----------------
+elif menu == "5. Clustering Makanan (K-Means)":
+    st.title("🤖 5. Pengelompokan Makanan Otomatis (Machine Learning)")
+    st.write("Gunakan algoritma **K-Means Clustering** untuk mengelompokkan makanan berdasarkan kemiripan nutrisinya.")
     
+    if not HAS_SKLEARN:
+        st.error("Library `scikit-learn` belum terinstall. Buka terminal dan jalankan: `pip install scikit-learn`")
+    else:
+        features = st.multiselect("Pilih nutrisi untuk dikelompokkan:", available_nutrients, default=["Energy (kJ)", "Protein (g)", "Fat (g)"])
+        k_clusters = st.slider("Jumlah Kelompok (K):", min_value=2, max_value=7, value=3)
+        
+        if st.button("Jalankan K-Means Clustering", type="primary") and len(features) > 0:
+            df_cluster = st.session_state.food_df.copy()
+            X = df_cluster[features].fillna(0)
+            
+            # Normalisasi data
+            scaler = StandardScaler()
+            X_scaled = scaler.fit_transform(X)
+            
+            # Proses K-Means
+            kmeans = KMeans(n_clusters=k_clusters, random_state=42, n_init=10)
+            df_cluster['Cluster'] = kmeans.fit_predict(X_scaled)
+            
+            st.success(f"Berhasil mengelompokkan {len(df_cluster)} makanan ke dalam {k_clusters} cluster!")
+            
+            # Tampilkan rata-rata tiap cluster untuk dianalisa
+            st.subheader("Rata-rata Nutrisi per Kelompok")
+            cluster_mean = df_cluster.groupby('Cluster')[features].mean().reset_index()
+            st.dataframe(cluster_mean, use_container_width=True)
+            
+            # Tampilkan hasil makanan
+            st.subheader("Daftar Makanan di Setiap Kelompok")
+            for i in range(k_clusters):
+                with st.expander(f"Kelompok {i} ({len(df_cluster[df_cluster['Cluster']==i])} makanan)"):
+                    st.dataframe(df_cluster[df_cluster['Cluster']==i][['Nama Makanan'] + features], use_container_width=True)
+
+# ----------------- HALAMAN 6: TOPSIS -----------------
+elif menu == "6. Rekomendasi Pintar (TOPSIS)":
+    st.title("⚖️ 6. Rekomendasi Multi-Kriteria (Metode TOPSIS)")
+    st.write("Sistem Pendukung Keputusan ini akan merangking makanan terbaik jika Anda memiliki banyak kriteria yang bertentangan (misal: Ingin tinggi protein TAPI harus rendah lemak dan sodium).")
+    
+    st.subheader("Tentukan Kriteria Pencarian")
+    col1, col2 = st.columns(2)
+    with col1:
+        benefit_cols = st.multiselect("Kriteria Benefit (Makin tinggi makin bagus):", available_nutrients, default=["Protein (g)", "Iron (mg)"])
+    with col2:
+        cost_cols = st.multiselect("Kriteria Cost (Makin rendah makin bagus):", available_nutrients, default=["Fat (g)", "Sodium (mg)"])
+    
+    if st.button("Jalankan TOPSIS", type="primary"):
+        all_criteria = benefit_cols + cost_cols
+        if not all_criteria:
+            st.warning("Pilih minimal 1 kriteria!")
+        else:
+            # 1. Ambil dataset & bersihkan nilai kosong
+            df_topsis = st.session_state.food_df[['Nama Makanan'] + all_criteria].copy()
+            df_topsis = df_topsis.set_index("Nama Makanan").fillna(0)
+            
+            # Filter baris yang semua nilainya 0 (menghindari error pembagian 0)
+            df_topsis = df_topsis.loc[(df_topsis != 0).any(axis=1)]
+            
+            # 2. Matriks Keputusan Ternormalisasi
+            pembagi = np.sqrt((df_topsis**2).sum())
+            pembagi = pembagi.replace(0, 1) # Cegah bagi 0
+            df_norm = df_topsis / pembagi
+            
+            # (Asumsi Bobot / Weight sama rata (1) untuk semua kriteria)
+            
+            # 3. Solusi Ideal Positif (V+) & Negatif (V-)
+            ideal_best = {}
+            ideal_worst = {}
+            for col in all_criteria:
+                if col in benefit_cols:
+                    ideal_best[col] = df_norm[col].max()
+                    ideal_worst[col] = df_norm[col].min()
+                else: # cost cols
+                    ideal_best[col] = df_norm[col].min()
+                    ideal_worst[col] = df_norm[col].max()
+                    
+            # 4. Jarak terhadap Ideal
+            S_plus = np.sqrt(((df_norm - pd.Series(ideal_best))**2).sum(axis=1))
+            S_min = np.sqrt(((df_norm - pd.Series(ideal_worst))**2).sum(axis=1))
+            
+            # 5. Skor Preferensi (Closeness Coefficient)
+            skor_topsis = S_min / (S_plus + S_min)
+            
+            # Format output
+            hasil_topsis = df_topsis.copy()
+            hasil_topsis['Skor TOPSIS'] = skor_topsis
+            hasil_topsis = hasil_topsis.sort_values(by="Skor TOPSIS", ascending=False).reset_index()
+            
+            st.success("Tabel Rekomendasi (Diurutkan dari yang terbaik):")
+            st.dataframe(hasil_topsis.head(25), use_container_width=True)
+            st.caption("Skor TOPSIS mendekati 1.0 berarti makanan tersebut sangat mendekati kondisi ideal (tinggi di benefit, rendah di cost).")
+
+# ----------------- HALAMAN 7: PANEL ADMIN -----------------
+elif menu == "7. Panel Manajemen Pakar":
+    st.title("🛠️ 7. Panel Manajemen Aturan Pakar")
     if not st.session_state.logged_in:
-        st.subheader("Silakan Login Terlebih Dahulu")
         username = st.text_input("Username Admin:")
         password = st.text_input("Password Admin:", type="password")
-        
-        if st.button("Masuk Ke Panel Kendali"):
+        if st.button("Masuk"):
             if username == "admin" and password == "pakar123":
                 st.session_state.logged_in = True
                 st.rerun()
-            else:
-                st.error("Kombinasi Username atau Password salah!")
     else:
-        st.success("Anda berhasil masuk sebagai Pakar/Admin Sistem!")
-        if st.button("Keluar / Logout Admin"):
+        st.success("🔓 Mode Admin Aktif")
+        if st.button("Keluar"):
             st.session_state.logged_in = False
             st.rerun()
-            
         st.divider()
-        st.subheader("Ubah Bobot Persentase CF Pakar (Modul Gejala Ekstraksi CSV)")
-        st.caption("Double klik pada kolom 'CF_Pakar' untuk mengubah angka keyakinan medis (rentang 0.0 s.d 1.0).")
-        
-        edited_symptoms = st.data_editor(st.session_state.rules_symptoms, num_rows="dynamic", key="editor_sym")
-        
-        st.subheader("Ubah Bobot Persentase CF Pakar (Modul Defisit Makan)")
-        edited_intake = st.data_editor(st.session_state.rules_intake, num_rows="dynamic", key="editor_int")
-        
-        if st.button("Simpan Perubahan Aturan Pakar ke Sistem", type="primary"):
+        st.caption("Sesuaikan CF (Bobot Kepastian Pakar) untuk setiap diagnosis.")
+        edited_symptoms = st.data_editor(st.session_state.rules_symptoms, num_rows="dynamic")
+        if st.button("Simpan Aturan"):
             st.session_state.rules_symptoms = edited_symptoms
-            st.session_state.rules_intake = edited_intake
-            st.success("Sukses! Seluruh basis aturan pakar berhasil di-update ke dalam memori aplikasi.")
+            st.success("Berhasil disimpan.")
