@@ -121,10 +121,15 @@ available_nutrients = [col for col in st.session_state.food_df.columns if pd.api
 # =========================================================================
 # 2. SIDEBAR NAVIGATION
 # =========================================================================
+def ganti_halaman(nama_halaman):
+    st.session_state.menu_utama = nama_halaman
+
+# Pastikan key ada di memori awal
 if 'menu_utama' not in st.session_state:
     st.session_state.menu_utama = "Beranda"
 
-menu = st.sidebar.radio("", [
+st.sidebar.title("NutrisiAnak Master")
+menu = st.sidebar.radio("Navigasi Aplikasi:", [
     "Beranda",
     "Ensiklopedia Gizi",
     "Rekomendasi Makanan",
@@ -136,13 +141,15 @@ menu = st.sidebar.radio("", [
     "Tentang Aplikasi"
 ], key="menu_utama")
 
-if st.session_state.menu_utama == "Beranda":
-    st.title("Selamat Datang di NutrisiAnak")
-    st.markdown("Sistem Pakar Gizi Berbasis *Certainty Factor* (CF)")
+# ----------------- HALAMAN 0: BERANDA (LOBBY) -----------------
+if menu == "Beranda":
+    st.title("🏡 Selamat Datang di NutrisiAnak")
+    st.markdown("### Sistem Pakar Gizi Berbasis *Certainty Factor* (CF)")
     st.write("NutrisiAnak adalah sistem cerdas yang membantu Anda menganalisis asupan gizi, merekomendasikan makanan, hingga mendiagnosa potensi masalah kesehatan akibat kekurangan atau kelebihan nutrisi.")
     st.divider()
     
-    st.markdown("Jelajahi Fitur Kami:")
+    st.markdown("#### 🚀 Jelajahi Fitur Kami:")
+    st.write("Silakan pilih fitur di bawah ini untuk mulai:")
     
     col1, col2, col3 = st.columns(3)
     
@@ -152,26 +159,18 @@ if st.session_state.menu_utama == "Beranda":
             <h3 style="text-align: center;">Ensiklopedia & Asupan</h3>
         </div>
         """, unsafe_allow_html=True)
-        if st.button("Ensiklopedia Gizi", use_container_width=True, help="Cari tahu kandungan detail dari ratusan jenis bahan makanan."):
-            st.session_state.menu_utama = "Ensiklopedia Gizi"
-            st.rerun()
-        if st.button("Analisis Asupan Harian", use_container_width=True, help="Masukkan makanan Anda hari ini dan lihat apakah sudah memenuhi standar AKG."):
-            st.session_state.menu_utama = "Analisis Asupan Harian"
-            st.rerun()
-        
-        
+        # Pakai on_click dan args buat pindah halaman tanpa error
+        st.button("📖 Ensiklopedia Gizi", use_container_width=True, on_click=ganti_halaman, args=("Ensiklopedia Gizi",))
+        st.button("🍽️ Analisis Asupan Harian", use_container_width=True, on_click=ganti_halaman, args=("Analisis Asupan Harian",))
+
     with col2: 
         st.markdown("""
         <div class="feature-card">
             <h3 style="text-align: center;">Rekomendasi & Pemulihan</h3>
         </div>
         """, unsafe_allow_html=True)
-        if st.button("Rekomendasi Makanan", use_container_width=True, help="Temukan makanan terbaik untuk memenuhi target gizi tertentu."):
-            st.session_state.menu_utama = "Rekomendasi Makanan"
-            st.rerun()
-        if st.button("Pemulihan Gizi (CF)", use_container_width=True, help="Hitung kepastian (persentase CF) suatu makanan dalam menutupi defisit gizi Anda."):
-            st.session_state.menu_utama = "Pemulihan Gizi"
-            st.rerun()
+        st.button("🎯 Rekomendasi Makanan", use_container_width=True, on_click=ganti_halaman, args=("Rekomendasi Makanan",))
+        st.button("🔋 Pemulihan Gizi (CF)", use_container_width=True, on_click=ganti_halaman, args=("Pemulihan Gizi",))
 
     with col3: 
         st.markdown("""
@@ -179,12 +178,8 @@ if st.session_state.menu_utama == "Beranda":
             <h3 style="text-align: center;">Diagnosis Sistem Pakar</h3>
         </div>
         """, unsafe_allow_html=True)
-        if st.button("Dual-Diagnosis (CF)", use_container_width=True, help="Masukkan keluhan fisik Anda, dan sistem akan menebak kekurangan atau keracunan gizi."):
-            st.session_state.menu_utama = "Dual-Diagnosis"
-            st.rerun()
-        if st.button("Prediksi Penyakit (CF)", use_container_width=True, help="AI memprediksi risiko penyakit esok hari berdasarkan asupan makanan Anda hari ini."):
-            st.session_state.menu_utama = "Prediksi Penyakit"
-            st.rerun()
+        st.button("⚖️ Dual-Diagnosis (CF)", use_container_width=True, on_click=ganti_halaman, args=("Dual-Diagnosis",))
+        st.button("🔮 Prediksi Penyakit (CF)", use_container_width=True, on_click=ganti_halaman, args=("Prediksi Penyakit",))
 
 # ----------------- HALAMAN 1: ENSIKLOPEDIA (LAMA) -----------------
 elif menu == "Ensiklopedia Gizi":
