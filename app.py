@@ -128,7 +128,7 @@ def ganti_halaman(nama_halaman):
 if 'menu_utama' not in st.session_state:
     st.session_state.menu_utama = "Beranda"
 
-st.sidebar.title("NutrisiAnak Master")
+st.sidebar.title("NutrisiAnak")
 menu = st.sidebar.radio("", [
     "Beranda",
     "Ensiklopedia Gizi",
