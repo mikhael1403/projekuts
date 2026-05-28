@@ -285,8 +285,8 @@ elif menu == "6. Dual-Diagnosis CF (Baru)":
 
 # ----------------- HALAMAN 7: PREDIKSI PENYAKIT (BARU 3) -----------------
 elif menu == "7. Prediksi Penyakit (Baru)":
-    st.title("🔮 7. CF Prediksi Penyakit Masa Depan")
-    st.write("Konsep Baru 3: Berdasarkan daftar makanan Anda hari ini, sistem menghitung **Certainty Factor (Risiko/Peluang)** Anda terjangkit penyakit esok hari akibat defisit atau keracunan gizi.")
+    st.title("🔮 7. CF Prediksi Penyakit Spesifik")
+    st.write("Sistem menghitung **Certainty Factor (Risiko/Peluang)** Anda terjangkit penyakit spesifik esok hari berdasarkan menu yang Anda makan hari ini.")
     
     selected_items = st.multiselect("Masukkan asupan makanan Anda hari ini:", st.session_state.food_df["Nama Makanan"].unique())
     if selected_items:
@@ -296,27 +296,44 @@ elif menu == "7. Prediksi Penyakit (Baru)":
             for key in summary_gizi.keys(): summary_gizi[key] += float(row.get(key, 0))
         
         risiko_list = []
-        for nutrisi in ["Protein (g)", "Vitamin C (mg)", "Iron (mg)", "Dietary Fiber (g)"]:
-            asupan = summary_gizi.get(nutrisi, 0)
-            batas_min = AKG_MIN.get(nutrisi, 1.0)
-            batas_max = AKG_MAX.get(nutrisi, None)
+        
+        # Mengecek semua nutrisi yang ada di tabel standar nutrisi
+        for _, row_std in std_nutrition_df.iterrows():
+            nutrisi_full = row_std['Nutrisi']
+            if pd.isna(nutrisi_full) or nutrisi_full not in summary_gizi: 
+                continue
+                
+            nutrisi_name = str(nutrisi_full).split(' (')[0]
+            asupan = summary_gizi[nutrisi_full]
+            batas_min = AKG_MIN.get(nutrisi_full, 1.0)
+            batas_max = AKG_MAX.get(nutrisi_full, None)
             
+            # Ekstrak nama penyakit/gejala dari CSV (Jika kosong, pakai teks default)
+            penyakit_kurang = str(row_std['Dampak Kekurangan']).capitalize() if pd.notna(row_std['Dampak Kekurangan']) else f"Penyakit defisit {nutrisi_name}"
+            penyakit_lebih = str(row_std['Dampak Kelebihan']).capitalize() if pd.notna(row_std['Dampak Kelebihan']) else f"Keracunan ekses {nutrisi_name}"
+            
+            # Hitung CF Kekurangan
             if asupan < batas_min:
-                cf_risiko = min((batas_min - asupan) / batas_min, 1.0) * 0.85 # Bobot CF 0.85
+                cf_risiko = min((batas_min - asupan) / batas_min, 1.0) * 0.85 # 0.85 adalah bobot CF Pakar
                 if cf_risiko > 0.1: 
-                    risiko_list.append((f"Penyakit Akibat Kekurangan {nutrisi.split(' (')[0]}", cf_risiko))
+                    risiko_list.append((f"{penyakit_kurang} (Kekurangan {nutrisi_name})", cf_risiko))
+                    
+            # Hitung CF Kelebihan
             elif batas_max and asupan > batas_max:
                 cf_risiko = min((asupan - batas_max) / batas_max, 1.0) * 0.85
                 if cf_risiko > 0.1: 
-                    risiko_list.append((f"Keracunan Akibat Kelebihan {nutrisi.split(' (')[0]}", cf_risiko))
+                    risiko_list.append((f"{penyakit_lebih} (Kelebihan {nutrisi_name})", cf_risiko))
                     
         st.divider()
         if risiko_list:
-            st.subheader("⚠️ Peringatan Risiko Klinis")
-            for risiko, cf_val in sorted(risiko_list, key=lambda x: x[1], reverse=True):
-                st.error(f"**{risiko}** | CF Kepastian Terjadi: **{cf_val*100:.1f}%**")
+            st.subheader("⚠️ Top 10 Prediksi Risiko Klinis")
+            # Mengurutkan dari CF terbesar dan mengambil top 10 saja agar rapi
+            top_10_risiko = sorted(risiko_list, key=lambda x: x[1], reverse=True)[:10]
+            
+            for risiko, cf_val in top_10_risiko:
+                st.error(f"**Risiko Medis:** {risiko} | **CF Peluang Terjadi: {cf_val*100:.1f}%**")
         else:
-            st.success("🎉 Hebat! Asupan hari ini sangat seimbang. CF Risiko Penyakit = 0%")
+            st.success("🎉 Hebat! Asupan Anda sangat seimbang. CF Risiko Penyakit = 0%")
 
 # ----------------- HALAMAN 8: PANEL ADMIN -----------------
 elif menu == "8. Panel Pakar (Admin)":
