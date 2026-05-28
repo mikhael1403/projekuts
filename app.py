@@ -148,8 +148,7 @@ if menu == "Beranda":
     st.write("NutrisiAnak adalah sistem cerdas yang membantu Anda menganalisis asupan gizi, merekomendasikan makanan, hingga mendiagnosa potensi masalah kesehatan akibat kekurangan atau kelebihan nutrisi.")
     st.divider()
     
-    st.markdown("Jelajahi Fitur Kami:")
-    st.write("Silakan pilih fitur di bawah ini untuk mulai:")
+    st.markdown("Silakan pilih fitur di bawah ini untuk mulai:")
     
     col1, col2, col3 = st.columns(3)
     
