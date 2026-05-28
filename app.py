@@ -224,8 +224,8 @@ elif menu == "Rekomendasi Makanan":
                             "Keyakinan Sistem": f"{cf_score * 100:.2f} %"
                         })
             if recommendations:
-                rec_df = pd.DataFrame(recommendations).sort_values(by="Skor", ascending=False).head(1)
-                st.success(f"Ditemukan {len(recommendations)} makanan penunjang. Berikut Top 20 Makanan Terbaik:")
+                rec_df = pd.DataFrame(recommendations).sort_values(by="Skor", ascending=False).head(50)
+                st.success(f"Ditemukan {len(recommendations)} makanan penunjang. Berikut Makanan yang Sesuai:")
                 st.dataframe(rec_df[["Nama Makanan", "Kandungan", "Keyakinan Sistem"]], use_container_width=True)
             else:
                 st.warning("Tidak ada makanan yang memenuhi syarat.")
