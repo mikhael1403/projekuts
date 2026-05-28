@@ -144,7 +144,7 @@ if menu == "Beranda":
     st.markdown("####Jelajahi Fitur Kami:")
     st.write("Silakan pilih menu di panel sebelah kiri untuk mulai menggunakan fitur-fitur berikut:")
     
-    col1, col2 = st.columns(2)
+    col1, col2, col3 = st.columns(3)
     with col1:
         st.markdown("""
         <div class="feature-card">
@@ -153,7 +153,7 @@ if menu == "Beranda":
             <p><b>Analisis Asupan Harian:</b> Masukkan makanan Anda hari ini dan lihat apakah sudah memenuhi standar Angka Kecukupan Gizi (AKG).</p>
         </div>
         """, unsafe_allow_html=True)
-        
+    with col2: 
         st.markdown("""
         <div class="feature-card">
             <h3>Rekomendasi & Pemulihan</h3>
@@ -162,7 +162,7 @@ if menu == "Beranda":
         </div>
         """, unsafe_allow_html=True)
         
-    with col2:
+   with col3: 
         st.markdown("""
         <div class="feature-card">
             <h3>Diagnosis Sistem Pakar</h3>
@@ -170,17 +170,10 @@ if menu == "Beranda":
             <p><b>Prediksi Penyakit (CF):</b> AI memprediksi risiko penyakit esok hari berdasarkan asupan makanan Anda hari ini.</p>
         </div>
         """, unsafe_allow_html=True)
-        
-        st.markdown("""
-        <div class="feature-card">
-            <h3>Panel Pakar</h3>
-            <p><b>Panel Admin:</b> Akses khusus untuk dokter/pakar gizi guna menyesuaikan bobot nilai kepastian medis (CF) di dalam sistem.</p>
-        </div>
-        """, unsafe_allow_html=True)
 
 # ----------------- HALAMAN 1: ENSIKLOPEDIA (LAMA) -----------------
 elif menu == "Ensiklopedia Gizi":
-    st.title("📖 Ensiklopedia Data Kandungan Gizi")
+    st.title("Ensiklopedia Data Kandungan Gizi")
     st.write(f"Database murni berisi **{len(st.session_state.food_df)} bahan pangan.**")
     selected_food = st.selectbox("Pilih Nama Makanan:", st.session_state.food_df["Nama Makanan"].unique())
     food_data = st.session_state.food_df[st.session_state.food_df["Nama Makanan"] == selected_food].iloc[0]
@@ -198,7 +191,7 @@ elif menu == "Ensiklopedia Gizi":
 
 # ----------------- HALAMAN 2: REKOMENDASI (LAMA) -----------------
 elif menu == "Rekomendasi Makanan":
-    st.title("🎯 Rekomendasi Makanan")
+    st.title("Rekomendasi Makanan")
     
     if not available_nutrients:
         st.warning("Tidak ada data nutrisi yang tersedia.")
@@ -229,7 +222,7 @@ elif menu == "Rekomendasi Makanan":
 
 # ----------------- HALAMAN 4: ANALISIS ASUPAN (REVISI) -----------------
 elif menu == "Analisis Asupan Harian":
-    st.title("🍽️ Evaluasi Asupan Harian")
+    st.title("Evaluasi Asupan Harian")
     st.write("Sistem dengan indikator batas minimum dan maksimum gizi harian.")
     
     selected_items = st.multiselect("Pilih daftar menu makanan Anda hari ini:", st.session_state.food_df["Nama Makanan"].unique())
@@ -267,7 +260,7 @@ elif menu == "Analisis Asupan Harian":
 
 # ----------------- HALAMAN 5: CF PEMULIHAN GIZI (BARU 1) -----------------
 elif menu == "Pemulihan Gizi":
-    st.title("🔋 Pemulihan Makanan")
+    st.title("Pemulihan Makanan")
     st.write("Menghitung kepastian suatu makanan mampu **menyembuhkan defisit gizi spesifik** Anda.")
     
     if not available_nutrients:
@@ -297,7 +290,7 @@ elif menu == "Pemulihan Gizi":
 
 # ----------------- HALAMAN 6: DUAL DIAGNOSIS (BARU 2) -----------------
 elif menu == "Dual-Diagnosis":
-    st.title("⚖️ Diagnosis Medis")
+    st.title("Diagnosis Medis")
     st.write("Masukan gejala Anda untuk mendiagnosa apakah Anda mengalami **Kekurangan Gizi** atau **Keracunan (Kelebihan) Gizi**.")
     
     unique_symptoms = st.session_state.rules_symptoms_new["Gejala"].unique()
@@ -333,7 +326,7 @@ elif menu == "Dual-Diagnosis":
 
 # ----------------- HALAMAN 7: PREDIKSI PENYAKIT (BARU 3) -----------------
 elif menu == "Prediksi Penyakit":
-    st.title("🔮 Prediksi Penyakit Spesifik")
+    st.title("Prediksi Penyakit Spesifik")
     st.write("Sistem menghitung Peluang Anda terjangkit penyakit spesifik esok hari berdasarkan menu yang Anda makan hari ini.")
     
     selected_items = st.multiselect("Masukkan asupan makanan Anda hari ini:", st.session_state.food_df["Nama Makanan"].unique())
@@ -375,9 +368,9 @@ elif menu == "Prediksi Penyakit":
             st.subheader("Top 10 Prediksi Risiko Klinis")
             top_10_risiko = sorted(risiko_list, key=lambda x: x[1], reverse=True)[:10]
             for risiko, cf_val in top_10_risiko:
-                st.error(f"**Risiko Medis:** {risiko} | **CF Peluang Terjadi: {cf_val*100:.1f}%**")
+                st.error(f"**Risiko Medis:** {risiko} | **Peluang Terjadi: {cf_val*100:.1f}%**")
         else:
-            st.success("Hebat! Asupan Anda sangat seimbang. CF Risiko Penyakit = 0%")
+            st.success("Hebat! Asupan Anda sangat seimbang. Risiko Penyakit = 0%")
 
 # ----------------- HALAMAN 8: PANEL ADMIN -----------------
 elif menu == "Panel Admin":
