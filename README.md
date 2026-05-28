@@ -13,7 +13,7 @@ Sistem ini terdiri dari berbagai modul utama yang dapat diakses melalui menu nav
 2. **Ensiklopedia Gizi**
    Eksplorasi daftar lengkap profil kandungan nutrisi (makro dan mikro) dari ratusan jenis bahan makanan.
 3. **Rekomendasi Makanan**
-   Fitur pencarian pintar untuk menemukan 20 saran makanan terbaik berdasarkan target gizi spesifik yang sedang dibutuhkan.
+   Fitur pencarian pintar untuk menemukan 100 saran makanan terbaik berdasarkan target gizi spesifik yang sedang dibutuhkan.
 4. **Analisis Asupan Harian**
    Modul evaluasi untuk mencatat total konsumsi makanan harian dan memastikan apakah pemenuhannya sudah sesuai dengan standar Angka Kecukupan Gizi (AKG).
 5. **Pemulihan Gizi**
