@@ -61,18 +61,6 @@ if 'cf_pakar_prediksi' not in st.session_state:
 if 'food_df' not in st.session_state:
     st.session_state.food_df = foods_data_df if not foods_data_df.empty else pd.DataFrame([{"Nama Makanan": "Kosong", "Energy (kJ)": 0, "Protein (g)": 0}])
 
-# --- STATE LAMA (Manual) ---
-if 'rules_symptoms_old' not in st.session_state:
-    st.session_state.rules_symptoms_old = pd.DataFrame([
-        {"Kode": "R001", "Gejala": "Gusi Berdarah", "Diagnosis": "Kekurangan Vitamin C", "CF_Pakar": 0.8},
-        {"Kode": "R002", "Gejala": "Sariawan Berulang", "Diagnosis": "Kekurangan Vitamin C", "CF_Pakar": 0.7},
-        {"Kode": "R003", "Gejala": "Mudah Memar", "Diagnosis": "Kekurangan Vitamin C", "CF_Pakar": 0.5},
-        {"Kode": "R007", "Gejala": "Sering Pusing & Lemas", "Diagnosis": "Kekurangan Zat Besi (Anemia)", "CF_Pakar": 0.8},
-        {"Kode": "R008", "Gejala": "Pucat di Kuku/Mata", "Diagnosis": "Kekurangan Zat Besi (Anemia)", "CF_Pakar": 0.75},
-        {"Kode": "R009", "Gejala": "Rambut Rontok Parah", "Diagnosis": "Kekurangan Protein", "CF_Pakar": 0.6},
-        {"Kode": "R010", "Gejala": "Otot Menyusut / Lemah", "Diagnosis": "Kekurangan Protein", "CF_Pakar": 0.7}
-    ])
-
 # --- STATE BARU (Auto-Generate dari CSV untuk Dual Diagnosis) ---
 if 'rules_symptoms_new' not in st.session_state:
     auto_rules = []
@@ -120,20 +108,19 @@ available_nutrients = [col for col in st.session_state.food_df.columns if pd.api
 # =========================================================================
 st.sidebar.title("NutriExpert Master")
 menu = st.sidebar.radio("Navigasi Aplikasi:", [
-    "1. Ensiklopedia Gizi",
-    "2. Rekomendasi CF (Lama)",
-    "3. Diagnosis Gejala (Lama)",
-    "4. Analisis Asupan (Revisi)",
-    "5. CF Pemulihan Gizi (Baru)",
-    "6. Dual-Diagnosis CF (Baru)",
-    "7. Prediksi Penyakit (Baru)",
-    "8. Panel Pakar (Admin)"
+    "Ensiklopedia Gizi",
+    "Rekomendasi Makanan",
+    "Analisis Asupan Harian",
+    "Pemulihan Gizi",
+    "Dual-Diagnosis",
+    "Prediksi Penyakit",
+    "Panel Admin"
 ])
 
 # ----------------- HALAMAN 1: ENSIKLOPEDIA (LAMA) -----------------
-if menu == "1. Ensiklopedia Gizi":
-    st.title("📖 1. Ensiklopedia Data Kandungan Gizi")
-    st.write(f"Database murni berisi **{len(st.session_state.food_df)} bahan pangan**.")
+if menu == "Ensiklopedia Gizi":
+    st.title("Ensiklopedia Data Kandungan Gizi")
+    st.write(f"Database murni berisi **{len(st.session_state.food_df)} bahan pangan.**")
     selected_food = st.selectbox("Pilih Nama Makanan:", st.session_state.food_df["Nama Makanan"].unique())
     food_data = st.session_state.food_df[st.session_state.food_df["Nama Makanan"] == selected_food].iloc[0]
     
@@ -147,8 +134,8 @@ if menu == "1. Ensiklopedia Gizi":
     st.dataframe(st.session_state.food_df, use_container_width=True)
 
 # ----------------- HALAMAN 2: REKOMENDASI (LAMA) -----------------
-elif menu == "2. Rekomendasi CF (Lama)":
-    st.title("🎯 2. Rekomendasi Makanan (Versi Lama)")
+elif menu == "Rekomendasi Makanan":
+    st.title("Rekomendasi Makanan")
     
     if not available_nutrients:
         st.warning("Tidak ada data nutrisi yang tersedia.")
@@ -167,51 +154,21 @@ elif menu == "2. Rekomendasi CF (Lama)":
                         recommendations.append({
                             "Nama Makanan": row["Nama Makanan"],
                             f"Kandungan": nilai_gizi,
-                            "Skor CF": cf_score,
+                            "Skor": cf_score,
                             "Keyakinan Sistem": f"{cf_score * 100:.2f} %"
                         })
             if recommendations:
-                rec_df = pd.DataFrame(recommendations).sort_values(by="Skor CF", ascending=False).head(20)
+                rec_df = pd.DataFrame(recommendations).sort_values(by="Skor", ascending=False).head(20)
                 st.success(f"Ditemukan {len(recommendations)} makanan penunjang. Berikut Top 20 Makanan Terbaik:")
                 st.dataframe(rec_df[["Nama Makanan", "Kandungan", "Keyakinan Sistem"]], use_container_width=True)
             else:
                 st.warning("Tidak ada makanan yang memenuhi syarat.")
 
-# ----------------- HALAMAN 3: DIAGNOSIS (LAMA) -----------------
-elif menu == "3. Diagnosis Gejala (Lama)":
-    st.title("🩺 3. Sistem Pakar Diagnosa Malnutrisi (Versi Lama)")
-    st.write("Versi lama menggunakan aturan medis yang diketik manual secara *hardcoded* (hanya 7 rules dasar).")
-    
-    unique_symptoms = st.session_state.rules_symptoms_old["Gejala"].unique()
-    selected_symptoms = st.multiselect("Pilih Gejala Fisik:", options=unique_symptoms)
-    
-    if selected_symptoms:
-        user_inputs = {}
-        valid_cf_options = {k: v for k, v in cf_options.items() if v > 0.0}
-        for symptom in selected_symptoms:
-            user_inputs[symptom] = st.radio(f"Parahnya '{symptom}'?", list(valid_cf_options.keys()), key=symptom, horizontal=True)
-            
-        if st.button("Diagnosis", type="primary"):
-            active_inputs = {sym: valid_cf_options[val] for sym, val in user_inputs.items()}
-            diagnoses = st.session_state.rules_symptoms_old["Diagnosis"].unique()
-            final_results = {}
-            for diag in diagnoses:
-                diag_rules = st.session_state.rules_symptoms_old[st.session_state.rules_symptoms_old["Diagnosis"] == diag]
-                cf_list = [active_inputs[r["Gejala"]] * r["CF_Pakar"] for _, r in diag_rules.iterrows() if r["Gejala"] in active_inputs]
-                if cf_list:
-                    cf_combine = cf_list[0]
-                    for cf_next in cf_list[1:]:
-                        cf_combine = cf_combine + cf_next * (1 - cf_combine)
-                    if cf_combine > 0.0: final_results[diag] = cf_combine
-            if final_results:
-                sorted_results = sorted(final_results.items(), key=lambda x: x[1], reverse=True)
-                top_diag, top_score = sorted_results[0]
-                st.success(f"🚨 **DIAGNOSIS UTAMA:** {top_diag} ({top_score*100:.2f}%)")
 
 # ----------------- HALAMAN 4: ANALISIS ASUPAN (REVISI) -----------------
-elif menu == "4. Analisis Asupan (Revisi)":
-    st.title("🍽️ 4. Evaluasi Asupan Harian (Revisi)")
-    st.write("Sistem yang telah direvisi dengan penambahan indikator Batas Minimum (AKG) dan Maksimum (Toleransi).")
+elif menu == "Analisis Asupan Harian":
+    st.title("Evaluasi Asupan Harian")
+    st.write("Sistem dengan indikator batas minimum dan maksimum.")
     
     selected_items = st.multiselect("Pilih daftar menu makanan Anda hari ini:", st.session_state.food_df["Nama Makanan"].unique())
     if selected_items:
@@ -236,20 +193,20 @@ elif menu == "4. Analisis Asupan (Revisi)":
                     st.write(f"Asupan: {asupan:.1f}")
                 with col2:
                     if asupan < batas_min:
-                        st.warning(f"⚠️ Kekurangan (Minimal: {batas_min})")
+                        st.warning(f"Kekurangan (Minimal: {batas_min})")
                         st.progress(float(max(0.0, min(asupan/batas_min, 1.0))))
                     elif batas_max and asupan > batas_max:
-                        st.error(f"🚨 Berlebih! (Maksimal: {batas_max})")
+                        st.error(f"Berlebih! (Maksimal: {batas_max})")
                         st.progress(1.0)
                     else:
-                        st.success(f"✅ Ideal (Sesuai Standar)")
+                        st.success(f"Ideal(Sesuai Standar)")
                         st.progress(1.0)
                 st.markdown("---")
 
 # ----------------- HALAMAN 5: CF PEMULIHAN GIZI (BARU 1) -----------------
-elif menu == "5. CF Pemulihan Gizi (Baru)":
-    st.title("🔋 5. CF Pemulihan Makanan")
-    st.write("Konsep Baru 1: Hitung Certainty Factor (Kepastian) suatu makanan mampu **menyembuhkan defisit gizi spesifik** Anda.")
+elif menu == "Pemulihan Gizi":
+    st.title("Pemulihan Makanan")
+    st.write("Menghitung kepastian suatu makanan mampu **menyembuhkan gizi spesifik** Anda.")
     
     if not available_nutrients:
         st.warning("Tidak ada data nutrisi yang tersedia.")
@@ -258,7 +215,7 @@ elif menu == "5. CF Pemulihan Gizi (Baru)":
         target_akg = AKG_MIN.get(gizi_pilihan, 10.0)
         defisit_user = st.number_input(f"Berapa banyak defisit {gizi_pilihan} yang ingin ditutupi?", value=float(target_akg))
 
-        if st.button("Cari Obat Alami (Makanan)"):
+        if st.button("Cari Obat Alami"):
             recommendations = []
             for _, row in st.session_state.food_df.iterrows():
                 nilai_gizi = float(row.get(gizi_pilihan, 0))
@@ -277,9 +234,9 @@ elif menu == "5. CF Pemulihan Gizi (Baru)":
                 st.dataframe(rec_df, use_container_width=True)
 
 # ----------------- HALAMAN 6: DUAL DIAGNOSIS (BARU 2) -----------------
-elif menu == "6. Dual-Diagnosis CF (Baru)":
-    st.title("⚖️ 6. Diagnosis Medis Dua Arah (Dual CF)")
-    st.write("Konsep Baru 2: Sistem pakar CF sekarang otomatis mengekstrak CSV dan bisa membedakan apakah Anda mengalami **Kekurangan Gizi** atau **Keracunan (Kelebihan) Gizi**.")
+elif menu == "Dual-Diagnosis":
+    st.title("Diagnosis Medis")
+    st.write("Masukan gejala Anda untuk mendiagnosa Anda mengalami **Kekurangan Gizi** atau **Keracunan (Kelebihan) Gizi**.")
     
     unique_symptoms = st.session_state.rules_symptoms_new["Gejala"].unique()
     selected_symptoms = st.multiselect("Pilih semua keluhan yang dialami:", options=unique_symptoms)
@@ -306,15 +263,15 @@ elif menu == "6. Dual-Diagnosis CF (Baru)":
             if final_results:
                 sorted_results = sorted(final_results.items(), key=lambda x: x[1], reverse=True)
                 top_diag, top_score = sorted_results[0]
-                st.error(f"🚨 **KESIMPULAN UTAMA:** Pasien mengalami **{top_diag}** (CF Kepastian: {top_score*100:.1f}%)")
+                st.error(f"**KESIMPULAN UTAMA:** Pasien mengalami **{top_diag}** (Kepastian: {top_score*100:.1f}%)")
                 st.write("**Diagnosis Lainnya:**")
                 for diag, score in sorted_results[1:5]:
                     st.write(f"• {diag} ({score*100:.1f}%)")
 
 # ----------------- HALAMAN 7: PREDIKSI PENYAKIT (BARU 3) -----------------
-elif menu == "7. Prediksi Penyakit (Baru)":
-    st.title("🔮 7. CF Prediksi Penyakit Spesifik")
-    st.write("Sistem menghitung **Certainty Factor (Risiko/Peluang)** Anda terjangkit penyakit spesifik esok hari berdasarkan menu yang Anda makan hari ini.")
+elif menu == "Prediksi Penyakit":
+    st.title("Prediksi Penyakit Spesifik")
+    st.write("Sistem menghitung Peluang Anda terjangkit penyakit spesifik esok hari berdasarkan menu yang Anda makan hari ini.")
     
     selected_items = st.multiselect("Masukkan asupan makanan Anda hari ini:", st.session_state.food_df["Nama Makanan"].unique())
     if selected_items:
@@ -352,16 +309,16 @@ elif menu == "7. Prediksi Penyakit (Baru)":
                     
         st.divider()
         if risiko_list:
-            st.subheader("⚠️ Top 10 Prediksi Risiko Klinis")
+            st.subheader("Top 10 Prediksi Risiko Klinis")
             top_10_risiko = sorted(risiko_list, key=lambda x: x[1], reverse=True)[:10]
             for risiko, cf_val in top_10_risiko:
                 st.error(f"**Risiko Medis:** {risiko} | **CF Peluang Terjadi: {cf_val*100:.1f}%**")
         else:
-            st.success("🎉 Hebat! Asupan Anda sangat seimbang. CF Risiko Penyakit = 0%")
+            st.success("Hebat! Asupan Anda sangat seimbang. CF Risiko Penyakit = 0%")
 
 # ----------------- HALAMAN 8: PANEL ADMIN -----------------
-elif menu == "8. Panel Pakar (Admin)":
-    st.title("🛠️ 8. Panel Manajemen Pakar")
+elif menu == "Panel Admin":
+    st.title("Panel Manajemen Pakar")
     if not st.session_state.logged_in:
         username = st.text_input("Username Admin:")
         password = st.text_input("Password Admin:", type="password")
@@ -372,7 +329,7 @@ elif menu == "8. Panel Pakar (Admin)":
             else:
                 st.error("Kredensial salah!")
     else:
-        st.success("🔓 Mode Pakar Terotorisasi")
+        st.success("Mode Pakar Terotorisasi")
         if st.button("Keluar (Logout)"):
             st.session_state.logged_in = False
             st.rerun()
