@@ -129,7 +129,7 @@ if 'menu_utama' not in st.session_state:
     st.session_state.menu_utama = "Beranda"
 
 st.sidebar.title("NutrisiAnak Master")
-menu = st.sidebar.radio("Navigasi Aplikasi:", [
+menu = st.sidebar.radio("", [
     "Beranda",
     "Ensiklopedia Gizi",
     "Rekomendasi Makanan",
@@ -143,12 +143,12 @@ menu = st.sidebar.radio("Navigasi Aplikasi:", [
 
 # ----------------- HALAMAN 0: BERANDA (LOBBY) -----------------
 if menu == "Beranda":
-    st.title("🏡 Selamat Datang di NutrisiAnak")
+    st.title("Selamat Datang di NutrisiAnak")
     st.markdown("### Sistem Pakar Gizi Berbasis *Certainty Factor* (CF)")
     st.write("NutrisiAnak adalah sistem cerdas yang membantu Anda menganalisis asupan gizi, merekomendasikan makanan, hingga mendiagnosa potensi masalah kesehatan akibat kekurangan atau kelebihan nutrisi.")
     st.divider()
     
-    st.markdown("#### 🚀 Jelajahi Fitur Kami:")
+    st.markdown("Jelajahi Fitur Kami:")
     st.write("Silakan pilih fitur di bawah ini untuk mulai:")
     
     col1, col2, col3 = st.columns(3)
@@ -160,8 +160,8 @@ if menu == "Beranda":
         </div>
         """, unsafe_allow_html=True)
         # Pakai on_click dan args buat pindah halaman tanpa error
-        st.button("📖 Ensiklopedia Gizi", use_container_width=True, on_click=ganti_halaman, args=("Ensiklopedia Gizi",))
-        st.button("🍽️ Analisis Asupan Harian", use_container_width=True, on_click=ganti_halaman, args=("Analisis Asupan Harian",))
+        st.button("Ensiklopedia Gizi", use_container_width=True, on_click=ganti_halaman, args=("Ensiklopedia Gizi",))
+        st.button("Analisis Asupan Harian", use_container_width=True, on_click=ganti_halaman, args=("Analisis Asupan Harian",))
 
     with col2: 
         st.markdown("""
@@ -169,8 +169,8 @@ if menu == "Beranda":
             <h3 style="text-align: center;">Rekomendasi & Pemulihan</h3>
         </div>
         """, unsafe_allow_html=True)
-        st.button("🎯 Rekomendasi Makanan", use_container_width=True, on_click=ganti_halaman, args=("Rekomendasi Makanan",))
-        st.button("🔋 Pemulihan Gizi (CF)", use_container_width=True, on_click=ganti_halaman, args=("Pemulihan Gizi",))
+        st.button("Rekomendasi Makanan", use_container_width=True, on_click=ganti_halaman, args=("Rekomendasi Makanan",))
+        st.button("Pemulihan Gizi", use_container_width=True, on_click=ganti_halaman, args=("Pemulihan Gizi",))
 
     with col3: 
         st.markdown("""
@@ -178,8 +178,8 @@ if menu == "Beranda":
             <h3 style="text-align: center;">Diagnosis Sistem Pakar</h3>
         </div>
         """, unsafe_allow_html=True)
-        st.button("⚖️ Dual-Diagnosis (CF)", use_container_width=True, on_click=ganti_halaman, args=("Dual-Diagnosis",))
-        st.button("🔮 Prediksi Penyakit (CF)", use_container_width=True, on_click=ganti_halaman, args=("Prediksi Penyakit",))
+        st.button("Dual-Diagnosis", use_container_width=True, on_click=ganti_halaman, args=("Dual-Diagnosis",))
+        st.button("Prediksi Penyakit", use_container_width=True, on_click=ganti_halaman, args=("Prediksi Penyakit",))
 
 # ----------------- HALAMAN 1: ENSIKLOPEDIA (LAMA) -----------------
 elif menu == "Ensiklopedia Gizi":
@@ -190,7 +190,7 @@ elif menu == "Ensiklopedia Gizi":
     
     col1, col2, col3 = st.columns(3)
     
-    st.subheader("Kandungan Gizi Utama")
+    st.subheader("Daftar Makanan dan Kandungan Gizi")
     col1.metric("Energi", f"{food_data.get('Energy (kJ)', 0)} kJ")
     col1.metric("Karbohidrat", f"{food_data.get('Carbohydrates (g)', 0)} g")
     col2.metric("Protein", f"{food_data.get('Protein (g)', 0)} g")
@@ -384,7 +384,7 @@ elif menu == "Prediksi Penyakit":
 
 # ----------------- HALAMAN 8: PANEL ADMIN -----------------
 elif menu == "Panel Admin":
-    st.title("🛠️ Panel Manajemen Pakar")
+    st.title("Panel Manajemen Pakar")
     if not st.session_state.logged_in:
         username = st.text_input("Username Admin:")
         password = st.text_input("Password Admin:", type="password")
