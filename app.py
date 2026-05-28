@@ -1,7 +1,7 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
-import re  # Untuk membersihkan teks/angka nyasar
+import re  
 
 # Set konfigurasi layout
 st.set_page_config(page_title="NutrisiAnak", layout="wide", initial_sidebar_state="expanded")
