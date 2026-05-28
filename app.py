@@ -136,9 +136,9 @@ menu = st.sidebar.radio("Navigasi Aplikasi:", [
 
 # ----------------- HALAMAN 0: BERANDA (LOBBY) -----------------
 if menu == "Beranda":
-    st.title("Selamat Datang di NutriExpert")
-    st.markdown("### Sistem Pakar Gizi Berbasis *Certainty Factor* (CF)")
-    st.write("NutriExpert adalah sistem cerdas yang membantu Anda menganalisis asupan gizi, merekomendasikan makanan, hingga mendiagnosa potensi masalah kesehatan akibat kekurangan atau kelebihan nutrisi.")
+    st.title("Selamat Datang di NutrisiAnak")
+    st.markdown("Sistem Pakar Gizi Berbasis *Certainty Factor* (CF)")
+    st.write("NutrisiAnak adalah sistem cerdas yang membantu Anda menganalisis asupan gizi, merekomendasikan makanan, hingga mendiagnosa potensi masalah kesehatan akibat kekurangan atau kelebihan nutrisi.")
     st.divider()
     
     st.markdown("####Jelajahi Fitur Kami:")
