@@ -124,8 +124,9 @@ if menu == "Ensiklopedia Gizi":
     selected_food = st.selectbox("Pilih Nama Makanan:", st.session_state.food_df["Nama Makanan"].unique())
     food_data = st.session_state.food_df[st.session_state.food_df["Nama Makanan"] == selected_food].iloc[0]
     
-    st.title("Daftar Makanan dan Kandungan Gizi")
     col1, col2, col3 = st.columns(3)
+    
+    st.title("Daftar Makanan dan Kandungan Gizi")
     col1.metric("Energi", f"{food_data.get('Energy (kJ)', 0)} kJ")
     col1.metric("Karbohidrat", f"{food_data.get('Carbohydrates (g)', 0)} g")
     col2.metric("Protein", f"{food_data.get('Protein (g)', 0)} g")
