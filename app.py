@@ -21,7 +21,7 @@ st.markdown("""
 def load_nutrition_standards():
     try:
         df = pd.read_csv("standard-nutrition.csv")
-        # Membersihkan angka nyasar di awal nama nutrisi (misal "18 Phosphorus")
+        # Membersihkan angka nyasar di awal nama nutrisi (misal "18 Phosphorus" jadi "Phosphorus")
         if 'Nutrisi' in df.columns:
             df['Nutrisi'] = df['Nutrisi'].astype(str).apply(lambda x: re.sub(r'^\d+\s*', '', x))
         return df
@@ -37,7 +37,7 @@ def load_food_data():
         if "Menu" in df.columns:
             df.rename(columns={"Menu": "Nama Makanan"}, inplace=True)
             
-        # MENGHAPUS KOLOM "ID" ATAU "Unnamed: 0" AGAR TIDAK MUNCUL DI DROPDOWN
+        # Menghapus kolom "ID" atau "Unnamed: 0" agar tidak muncul di pilihan gizi
         kolom_sampah = [col for col in ["ID", "Unnamed: 0", "id"] if col in df.columns]
         if kolom_sampah:
             df.drop(columns=kolom_sampah, inplace=True)
@@ -51,8 +51,12 @@ def load_food_data():
 std_nutrition_df = load_nutrition_standards()
 foods_data_df = load_food_data()
 
+# Inisialisasi Session State
 if 'logged_in' not in st.session_state:
     st.session_state.logged_in = False
+
+if 'cf_pakar_prediksi' not in st.session_state:
+    st.session_state.cf_pakar_prediksi = 0.85  # Default bobot prediksi penyakit
 
 if 'food_df' not in st.session_state:
     st.session_state.food_df = foods_data_df if not foods_data_df.empty else pd.DataFrame([{"Nama Makanan": "Kosong", "Energy (kJ)": 0, "Protein (g)": 0}])
@@ -76,16 +80,19 @@ if 'rules_symptoms_new' not in st.session_state:
     if not std_nutrition_df.empty:
         for _, row in std_nutrition_df.iterrows():
             nutrisi = str(row['Nutrisi']).split(" (")[0]
-            if pd.notna(row['Dampak Kekurangan']):
+            
+            if pd.notna(row['Dampak Kekurangan']) and str(row['Dampak Kekurangan']).lower() != "nan":
                 for g in str(row['Dampak Kekurangan']).split(','):
-                    if g.strip() and g.strip().lower() != "nan":
+                    if g.strip():
                         auto_rules.append({"Kode": f"RN{rule_idx:03d}", "Gejala": g.strip().capitalize(), "Diagnosis": f"Kekurangan {nutrisi}", "Tipe": "Defisit", "CF_Pakar": 0.6})
                         rule_idx += 1
-            if pd.notna(row['Dampak Kelebihan']):
+                        
+            if pd.notna(row['Dampak Kelebihan']) and str(row['Dampak Kelebihan']).lower() != "nan":
                 for g in str(row['Dampak Kelebihan']).split(','):
-                    if g.strip() and g.strip().lower() != "nan":
+                    if g.strip():
                         auto_rules.append({"Kode": f"RN{rule_idx:03d}", "Gejala": g.strip().capitalize(), "Diagnosis": f"Kelebihan {nutrisi}", "Tipe": "Ekses", "CF_Pakar": 0.6})
                         rule_idx += 1
+                        
         st.session_state.rules_symptoms_new = pd.DataFrame(auto_rules)
     else:
         st.session_state.rules_symptoms_new = pd.DataFrame(columns=["Kode", "Gejala", "Diagnosis", "Tipe", "CF_Pakar"])
@@ -105,8 +112,8 @@ if not AKG_MIN:
 
 cf_options = {"Tidak Merasakan": 0.0, "Gejala Ringan": 0.4, "Gejala Sedang": 0.7, "Gejala Parah": 1.0}
 
-# Ekstrak daftar nutrisi murni (hanya kolom angka & bukan nama makanan/ID)
-available_nutrients = [col for col in st.session_state.food_df.columns if col not in ["Nama Makanan", "ID", "Unnamed: 0"] and pd.api.types.is_numeric_dtype(st.session_state.food_df[col])]
+# Ekstrak daftar nutrisi murni (hanya kolom angka)
+available_nutrients = [col for col in st.session_state.food_df.columns if pd.api.types.is_numeric_dtype(st.session_state.food_df[col])]
 
 # =========================================================================
 # 2. SIDEBAR NAVIGATION
@@ -143,7 +150,6 @@ if menu == "1. Ensiklopedia Gizi":
 elif menu == "2. Rekomendasi CF (Lama)":
     st.title("🎯 2. Rekomendasi Makanan (Versi Lama)")
     
-    # Validasi jika list kosong
     if not available_nutrients:
         st.warning("Tidak ada data nutrisi yang tersedia.")
     else:
@@ -329,15 +335,18 @@ elif menu == "7. Prediksi Penyakit (Baru)":
             batas_min = AKG_MIN.get(nutrisi_full, 1.0)
             batas_max = AKG_MAX.get(nutrisi_full, None)
             
-            penyakit_kurang = str(row_std['Dampak Kekurangan']).capitalize() if pd.notna(row_std['Dampak Kekurangan']) else f"Penyakit defisit {nutrisi_name}"
-            penyakit_lebih = str(row_std['Dampak Kelebihan']).capitalize() if pd.notna(row_std['Dampak Kelebihan']) else f"Keracunan ekses {nutrisi_name}"
+            penyakit_kurang = str(row_std['Dampak Kekurangan']).capitalize() if pd.notna(row_std['Dampak Kekurangan']) and str(row_std['Dampak Kekurangan']).lower() != 'nan' else f"Penyakit defisit {nutrisi_name}"
+            penyakit_lebih = str(row_std['Dampak Kelebihan']).capitalize() if pd.notna(row_std['Dampak Kelebihan']) and str(row_std['Dampak Kelebihan']).lower() != 'nan' else f"Keracunan ekses {nutrisi_name}"
             
+            # Menggunakan nilai cf_pakar_prediksi dari st.session_state (diatur Admin)
+            cf_pakar = float(st.session_state.cf_pakar_prediksi)
+
             if asupan < batas_min:
-                cf_risiko = min((batas_min - asupan) / batas_min, 1.0) * 0.85 
+                cf_risiko = min((batas_min - asupan) / batas_min, 1.0) * cf_pakar 
                 if cf_risiko > 0.1: 
                     risiko_list.append((f"{penyakit_kurang} (Kekurangan {nutrisi_name})", cf_risiko))
             elif batas_max and asupan > batas_max:
-                cf_risiko = min((asupan - batas_max) / batas_max, 1.0) * 0.85
+                cf_risiko = min((asupan - batas_max) / batas_max, 1.0) * cf_pakar
                 if cf_risiko > 0.1: 
                     risiko_list.append((f"{penyakit_lebih} (Kelebihan {nutrisi_name})", cf_risiko))
                     
@@ -375,6 +384,15 @@ elif menu == "8. Panel Pakar (Admin)":
         st.subheader("B. Edit Aturan Dual-Diagnosis Baru (Halaman 6)")
         st.write("Aturan ini di-generate otomatis dari CSV. Ubah bobot CF di sini.")
         st.session_state.rules_symptoms_new = st.data_editor(st.session_state.rules_symptoms_new, num_rows="dynamic", key="edit_new")
+        
+        st.subheader("C. Edit Sensitivitas Prediksi (Halaman 7)")
+        st.write("Atur seberapa 'Yakin' sistem (CF Pakar) dalam memprediksi penyakit berdasarkan asupan yang melenceng dari standar.")
+        st.session_state.cf_pakar_prediksi = st.slider(
+            "Bobot CF Pakar Prediksi Penyakit:", 
+            min_value=0.1, max_value=1.0, 
+            value=float(st.session_state.cf_pakar_prediksi), 
+            step=0.05
+        )
         
         if st.button("Simpan Semua Konfigurasi", type="primary"):
             st.success("Semua basis pengetahuan Certainty Factor berhasil diperbarui.")
