@@ -10,6 +10,20 @@ st.markdown("""
     .stButton>button { border-radius: 20px; transition: all 0.3s; }
     .stButton>button:hover { transform: scale(1.05); box-shadow: 0px 4px 10px rgba(0,0,0,0.1); }
     [data-testid="stMetricValue"] { color: #27ae60; font-weight: bold; }
+    
+    /* Style untuk kartu di Beranda */
+    .feature-card {
+        padding: 20px;
+        border-radius: 15px;
+        border: 1px solid #e0e0e0;
+        background-color: #f9f9f9;
+        margin-bottom: 20px;
+        transition: 0.3s;
+    }
+    .feature-card:hover {
+        box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+        border-color: #27ae60;
+    }
     </style>
 """, unsafe_allow_html=True)
 
@@ -103,30 +117,77 @@ cf_options = {"Tidak Merasakan": 0.0, "Gejala Ringan": 0.4, "Gejala Sedang": 0.7
 # Ekstrak daftar nutrisi murni (hanya kolom angka)
 available_nutrients = [col for col in st.session_state.food_df.columns if pd.api.types.is_numeric_dtype(st.session_state.food_df[col])]
 
+
 # =========================================================================
 # 2. SIDEBAR NAVIGATION
 # =========================================================================
 st.sidebar.title("NutriExpert Master")
 menu = st.sidebar.radio("Navigasi Aplikasi:", [
+    "Beranda",
     "Ensiklopedia Gizi",
     "Rekomendasi Makanan",
     "Analisis Asupan Harian",
     "Pemulihan Gizi",
     "Dual-Diagnosis",
     "Prediksi Penyakit",
-    "Panel Admin"
+    "Panel Admin",
+    "Tentang Aplikasi"
 ])
 
+# ----------------- HALAMAN 0: BERANDA (LOBBY) -----------------
+if menu == "Beranda":
+    st.title("🏡 Selamat Datang di NutriExpert")
+    st.markdown("### Sistem Pakar Gizi Berbasis *Certainty Factor* (CF)")
+    st.write("NutriExpert adalah sistem cerdas yang membantu Anda menganalisis asupan gizi, merekomendasikan makanan, hingga mendiagnosa potensi masalah kesehatan akibat kekurangan atau kelebihan nutrisi.")
+    st.divider()
+    
+    st.markdown("#### 🚀 Jelajahi Fitur Kami:")
+    st.write("Silakan pilih menu di panel sebelah kiri untuk mulai menggunakan fitur-fitur berikut:")
+    
+    col1, col2 = st.columns(2)
+    with col1:
+        st.markdown("""
+        <div class="feature-card">
+            <h3>📖 Ensiklopedia & Asupan</h3>
+            <p><b>Ensiklopedia Gizi:</b> Cari tahu kandungan detail dari ratusan jenis bahan makanan.</p>
+            <p><b>Analisis Asupan Harian:</b> Masukkan makanan Anda hari ini dan lihat apakah sudah memenuhi standar Angka Kecukupan Gizi (AKG).</p>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        st.markdown("""
+        <div class="feature-card">
+            <h3>🎯 Rekomendasi & Pemulihan</h3>
+            <p><b>Rekomendasi Makanan:</b> Temukan makanan terbaik untuk memenuhi target gizi tertentu.</p>
+            <p><b>Pemulihan Gizi (CF):</b> Hitung kepastian (persentase CF) suatu makanan dalam menutupi defisit gizi Anda.</p>
+        </div>
+        """, unsafe_allow_html=True)
+        
+    with col2:
+        st.markdown("""
+        <div class="feature-card">
+            <h3>🩺 Diagnosis Sistem Pakar</h3>
+            <p><b>Dual-Diagnosis (CF):</b> Masukkan keluhan fisik Anda, dan sistem akan menebak apakah Anda mengalami kekurangan atau keracunan gizi.</p>
+            <p><b>Prediksi Penyakit (CF):</b> AI memprediksi risiko penyakit esok hari berdasarkan asupan makanan Anda hari ini.</p>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        st.markdown("""
+        <div class="feature-card">
+            <h3>🛠️ Panel Pakar</h3>
+            <p><b>Panel Admin:</b> Akses khusus untuk dokter/pakar gizi guna menyesuaikan bobot nilai kepastian medis (CF) di dalam sistem.</p>
+        </div>
+        """, unsafe_allow_html=True)
+
 # ----------------- HALAMAN 1: ENSIKLOPEDIA (LAMA) -----------------
-if menu == "Ensiklopedia Gizi":
-    st.title("Ensiklopedia Data Kandungan Gizi")
+elif menu == "Ensiklopedia Gizi":
+    st.title("📖 Ensiklopedia Data Kandungan Gizi")
     st.write(f"Database murni berisi **{len(st.session_state.food_df)} bahan pangan.**")
     selected_food = st.selectbox("Pilih Nama Makanan:", st.session_state.food_df["Nama Makanan"].unique())
     food_data = st.session_state.food_df[st.session_state.food_df["Nama Makanan"] == selected_food].iloc[0]
     
     col1, col2, col3 = st.columns(3)
     
-    st.title("Daftar Makanan dan Kandungan Gizi")
+    st.subheader("Kandungan Gizi Utama")
     col1.metric("Energi", f"{food_data.get('Energy (kJ)', 0)} kJ")
     col1.metric("Karbohidrat", f"{food_data.get('Carbohydrates (g)', 0)} g")
     col2.metric("Protein", f"{food_data.get('Protein (g)', 0)} g")
@@ -137,7 +198,7 @@ if menu == "Ensiklopedia Gizi":
 
 # ----------------- HALAMAN 2: REKOMENDASI (LAMA) -----------------
 elif menu == "Rekomendasi Makanan":
-    st.title("Rekomendasi Makanan")
+    st.title("🎯 Rekomendasi Makanan")
     
     if not available_nutrients:
         st.warning("Tidak ada data nutrisi yang tersedia.")
@@ -166,10 +227,9 @@ elif menu == "Rekomendasi Makanan":
             else:
                 st.warning("Tidak ada makanan yang memenuhi syarat.")
 
-
 # ----------------- HALAMAN 4: ANALISIS ASUPAN (REVISI) -----------------
 elif menu == "Analisis Asupan Harian":
-    st.title("Evaluasi Asupan Harian")
+    st.title("🍽️ Evaluasi Asupan Harian")
     st.write("Sistem dengan indikator batas minimum dan maksimum gizi harian.")
     
     selected_items = st.multiselect("Pilih daftar menu makanan Anda hari ini:", st.session_state.food_df["Nama Makanan"].unique())
@@ -201,14 +261,14 @@ elif menu == "Analisis Asupan Harian":
                         st.error(f"Berlebih! (Maksimal: {batas_max})")
                         st.progress(1.0)
                     else:
-                        st.success(f"Ideal(Sesuai Standar)")
+                        st.success(f"Ideal (Sesuai Standar)")
                         st.progress(1.0)
                 st.markdown("---")
 
 # ----------------- HALAMAN 5: CF PEMULIHAN GIZI (BARU 1) -----------------
 elif menu == "Pemulihan Gizi":
-    st.title("Pemulihan Makanan")
-    st.write("Menghitung kepastian suatu makanan mampu **menyembuhkan gizi spesifik** Anda.")
+    st.title("🔋 Pemulihan Makanan")
+    st.write("Menghitung kepastian suatu makanan mampu **menyembuhkan defisit gizi spesifik** Anda.")
     
     if not available_nutrients:
         st.warning("Tidak ada data nutrisi yang tersedia.")
@@ -237,8 +297,8 @@ elif menu == "Pemulihan Gizi":
 
 # ----------------- HALAMAN 6: DUAL DIAGNOSIS (BARU 2) -----------------
 elif menu == "Dual-Diagnosis":
-    st.title("Diagnosis Medis")
-    st.write("Masukan gejala Anda untuk mendiagnosa Anda mengalami **Kekurangan Gizi** atau **Keracunan (Kelebihan) Gizi**.")
+    st.title("⚖️ Diagnosis Medis")
+    st.write("Masukan gejala Anda untuk mendiagnosa apakah Anda mengalami **Kekurangan Gizi** atau **Keracunan (Kelebihan) Gizi**.")
     
     unique_symptoms = st.session_state.rules_symptoms_new["Gejala"].unique()
     selected_symptoms = st.multiselect("Pilih semua keluhan yang dialami:", options=unique_symptoms)
@@ -263,6 +323,7 @@ elif menu == "Dual-Diagnosis":
                     if cf_combine > 0.0: final_results[diag] = cf_combine
             
             if final_results:
+                st.divider()
                 sorted_results = sorted(final_results.items(), key=lambda x: x[1], reverse=True)
                 top_diag, top_score = sorted_results[0]
                 st.error(f"**KESIMPULAN UTAMA:** Pasien mengalami **{top_diag}** (Kepastian: {top_score*100:.1f}%)")
@@ -272,7 +333,7 @@ elif menu == "Dual-Diagnosis":
 
 # ----------------- HALAMAN 7: PREDIKSI PENYAKIT (BARU 3) -----------------
 elif menu == "Prediksi Penyakit":
-    st.title("Prediksi Penyakit Spesifik")
+    st.title("🔮 Prediksi Penyakit Spesifik")
     st.write("Sistem menghitung Peluang Anda terjangkit penyakit spesifik esok hari berdasarkan menu yang Anda makan hari ini.")
     
     selected_items = st.multiselect("Masukkan asupan makanan Anda hari ini:", st.session_state.food_df["Nama Makanan"].unique())
@@ -320,7 +381,7 @@ elif menu == "Prediksi Penyakit":
 
 # ----------------- HALAMAN 8: PANEL ADMIN -----------------
 elif menu == "Panel Admin":
-    st.title("Panel Manajemen Pakar")
+    st.title("🛠️ Panel Manajemen Pakar")
     if not st.session_state.logged_in:
         username = st.text_input("Username Admin:")
         password = st.text_input("Password Admin:", type="password")
@@ -337,14 +398,14 @@ elif menu == "Panel Admin":
             st.rerun()
         
         st.divider()
-        st.subheader("A. Edit Aturan Diagnosis Lama (Halaman 3)")
+        st.subheader("A. Edit Aturan Diagnosis Lama")
         st.session_state.rules_symptoms_old = st.data_editor(st.session_state.rules_symptoms_old, num_rows="dynamic", key="edit_old")
         
-        st.subheader("B. Edit Aturan Dual-Diagnosis Baru (Halaman 6)")
+        st.subheader("B. Edit Aturan Dual-Diagnosis Baru")
         st.write("Aturan ini di-generate otomatis dari CSV. Ubah bobot CF di sini.")
         st.session_state.rules_symptoms_new = st.data_editor(st.session_state.rules_symptoms_new, num_rows="dynamic", key="edit_new")
         
-        st.subheader("C. Edit Sensitivitas Prediksi (Halaman 7)")
+        st.subheader("C. Edit Sensitivitas Prediksi Penyakit")
         st.write("Atur seberapa 'Yakin' sistem (CF Pakar) dalam memprediksi penyakit berdasarkan asupan yang melenceng dari standar.")
         st.session_state.cf_pakar_prediksi = st.slider(
             "Bobot CF Pakar Prediksi Penyakit:", 
@@ -355,3 +416,34 @@ elif menu == "Panel Admin":
         
         if st.button("Simpan Semua Konfigurasi", type="primary"):
             st.success("Semua basis pengetahuan Certainty Factor berhasil diperbarui.")
+
+# ----------------- HALAMAN 9: TENTANG APLIKASI -----------------
+elif menu == "Tentang Aplikasi":
+    st.title("ℹ️ Tentang Aplikasi")
+    st.write("Informasi mengenai pengembangan, dataset, dan metode yang digunakan dalam aplikasi ini.")
+    st.divider()
+    
+    st.subheader("👨‍💻 Pengembang")
+    st.write("**Nama:** [Isi Nama Kamu]")
+    st.write("**NIM/Instansi:** [Isi NIM/Instansi Kamu]")
+    st.write("**Deskripsi:** [Isi deskripsi singkat tentang tujuan pembuatan aplikasi ini]")
+    
+    st.write("")
+    st.subheader("🧠 Metode Analisis: Certainty Factor (CF)")
+    st.write("""
+    Aplikasi ini menggunakan metode **Certainty Factor (CF)** dari cabang keilmuan Sistem Pakar (*Expert System*). 
+    CF digunakan untuk membuktikan tingkat kepastian suatu fakta atau diagnosis berdasarkan perhitungan matematis dari bobot pakar dan input pengguna.
+    
+    Pada aplikasi ini, CF diimplementasikan ke dalam 3 kasus utama:
+    1. **CF Pemulihan:** Mengukur persentase kepastian sebuah makanan dalam mencukupi defisit gizi.
+    2. **CF Dual-Diagnosis:** Mengukur kepastian medis apakah pasien mengalami Kekurangan atau Kelebihan gizi berdasarkan gejalanya.
+    3. **CF Prediksi Penyakit:** Mengukur probabilitas risiko penyakit di masa depan akibat asupan gizi yang tidak memenuhi standar (Minimum/Maksimum).
+    """)
+    
+    st.write("")
+    st.subheader("📊 Dataset yang Digunakan")
+    st.markdown("""
+    Sistem ini dibangun di atas dua basis data utama:
+    * **`standard-nutrition.csv`**: [Isi penjelasan singkat dataset ini, contoh: Dataset berisi standar Angka Kecukupan Gizi (AKG) beserta dampak medis jika terjadi kekurangan atau kelebihan].
+    * **`foods.csv`**: [Isi penjelasan singkat dataset ini, contoh: Database komprehensif yang berisi profil ratusan jenis makanan beserta rincian gizi makro dan mikronya].
+    """)
