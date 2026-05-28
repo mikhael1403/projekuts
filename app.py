@@ -136,19 +136,19 @@ menu = st.sidebar.radio("Navigasi Aplikasi:", [
 
 # ----------------- HALAMAN 0: BERANDA (LOBBY) -----------------
 if menu == "Beranda":
-    st.title("🏡 Selamat Datang di NutriExpert")
+    st.title("Selamat Datang di NutriExpert")
     st.markdown("### Sistem Pakar Gizi Berbasis *Certainty Factor* (CF)")
     st.write("NutriExpert adalah sistem cerdas yang membantu Anda menganalisis asupan gizi, merekomendasikan makanan, hingga mendiagnosa potensi masalah kesehatan akibat kekurangan atau kelebihan nutrisi.")
     st.divider()
     
-    st.markdown("#### 🚀 Jelajahi Fitur Kami:")
+    st.markdown("####Jelajahi Fitur Kami:")
     st.write("Silakan pilih menu di panel sebelah kiri untuk mulai menggunakan fitur-fitur berikut:")
     
     col1, col2 = st.columns(2)
     with col1:
         st.markdown("""
         <div class="feature-card">
-            <h3>📖 Ensiklopedia & Asupan</h3>
+            <h3>Ensiklopedia & Asupan</h3>
             <p><b>Ensiklopedia Gizi:</b> Cari tahu kandungan detail dari ratusan jenis bahan makanan.</p>
             <p><b>Analisis Asupan Harian:</b> Masukkan makanan Anda hari ini dan lihat apakah sudah memenuhi standar Angka Kecukupan Gizi (AKG).</p>
         </div>
@@ -156,7 +156,7 @@ if menu == "Beranda":
         
         st.markdown("""
         <div class="feature-card">
-            <h3>🎯 Rekomendasi & Pemulihan</h3>
+            <h3>Rekomendasi & Pemulihan</h3>
             <p><b>Rekomendasi Makanan:</b> Temukan makanan terbaik untuk memenuhi target gizi tertentu.</p>
             <p><b>Pemulihan Gizi (CF):</b> Hitung kepastian (persentase CF) suatu makanan dalam menutupi defisit gizi Anda.</p>
         </div>
@@ -165,7 +165,7 @@ if menu == "Beranda":
     with col2:
         st.markdown("""
         <div class="feature-card">
-            <h3>🩺 Diagnosis Sistem Pakar</h3>
+            <h3>Diagnosis Sistem Pakar</h3>
             <p><b>Dual-Diagnosis (CF):</b> Masukkan keluhan fisik Anda, dan sistem akan menebak apakah Anda mengalami kekurangan atau keracunan gizi.</p>
             <p><b>Prediksi Penyakit (CF):</b> AI memprediksi risiko penyakit esok hari berdasarkan asupan makanan Anda hari ini.</p>
         </div>
@@ -173,7 +173,7 @@ if menu == "Beranda":
         
         st.markdown("""
         <div class="feature-card">
-            <h3>🛠️ Panel Pakar</h3>
+            <h3>Panel Pakar</h3>
             <p><b>Panel Admin:</b> Akses khusus untuk dokter/pakar gizi guna menyesuaikan bobot nilai kepastian medis (CF) di dalam sistem.</p>
         </div>
         """, unsafe_allow_html=True)
@@ -419,17 +419,16 @@ elif menu == "Panel Admin":
 
 # ----------------- HALAMAN 9: TENTANG APLIKASI -----------------
 elif menu == "Tentang Aplikasi":
-    st.title("ℹ️ Tentang Aplikasi")
+    st.title("Tentang Aplikasi")
     st.write("Informasi mengenai pengembangan, dataset, dan metode yang digunakan dalam aplikasi ini.")
     st.divider()
     
-    st.subheader("👨‍💻 Pengembang")
-    st.write("**Nama:** [Isi Nama Kamu]")
-    st.write("**NIM/Instansi:** [Isi NIM/Instansi Kamu]")
-    st.write("**Deskripsi:** [Isi deskripsi singkat tentang tujuan pembuatan aplikasi ini]")
+    st.subheader("Anggota kelompok")
+    st.write("**Nama/NIM:** Ghulam Yahya Nashrillah (2313010654)")
+    st.write("**Nama/NIM:** Mikhael Dava Putra Wibowo (2313010650)")
     
     st.write("")
-    st.subheader("🧠 Metode Analisis: Certainty Factor (CF)")
+    st.subheader("Metode Analisis: Certainty Factor (CF)")
     st.write("""
     Aplikasi ini menggunakan metode **Certainty Factor (CF)** dari cabang keilmuan Sistem Pakar (*Expert System*). 
     CF digunakan untuk membuktikan tingkat kepastian suatu fakta atau diagnosis berdasarkan perhitungan matematis dari bobot pakar dan input pengguna.
@@ -441,9 +440,9 @@ elif menu == "Tentang Aplikasi":
     """)
     
     st.write("")
-    st.subheader("📊 Dataset yang Digunakan")
+    st.subheader("Dataset yang Digunakan")
     st.markdown("""
     Sistem ini dibangun di atas dua basis data utama:
-    * **`standard-nutrition.csv`**: [Isi penjelasan singkat dataset ini, contoh: Dataset berisi standar Angka Kecukupan Gizi (AKG) beserta dampak medis jika terjadi kekurangan atau kelebihan].
-    * **`foods.csv`**: [Isi penjelasan singkat dataset ini, contoh: Database komprehensif yang berisi profil ratusan jenis makanan beserta rincian gizi makro dan mikronya].
+    * **`standard-nutrition.csv`**: Dataset berisi standar Angka Kecukupan Gizi (AKG) beserta dampak medis jika terjadi kekurangan atau kelebihan.
+    * **`foods.csv`**: Database komprehensif yang berisi profil ratusan jenis makanan beserta rincian gizi makro dan mikronya.
     """)
