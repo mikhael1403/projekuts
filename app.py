@@ -138,7 +138,7 @@ menu = st.sidebar.radio("", [
     "Dual-Diagnosis",
     "Prediksi Penyakit",
     "Panel Admin",
-    "Tentang Aplikasi"
+    "Tentang Website"
 ], key="menu_utama")
 
 # ----------------- HALAMAN 0: BERANDA (LOBBY) -----------------
@@ -421,8 +421,8 @@ elif menu == "Panel Admin":
             st.success("Semua basis pengetahuan Certainty Factor berhasil diperbarui.")
 
 # ----------------- HALAMAN 9: TENTANG APLIKASI -----------------
-elif menu == "Tentang Aplikasi":
-    st.title("Tentang Aplikasi")
+elif menu == "Tentang Website":
+    st.title("Tentang Website")
     st.write("Informasi mengenai pengembangan, dataset, dan metode yang digunakan dalam aplikasi ini.")
     st.divider()
     
