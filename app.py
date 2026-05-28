@@ -147,7 +147,11 @@ if st.session_state.menu_utama == "Beranda":
     col1, col2, col3 = st.columns(3)
     
     with col1:
-
+        st.markdown("""
+        <div class="feature-card">
+            <h3 style="text-align: center;">Ensiklopedia & Asupan</h3>
+        </div>
+        """, unsafe_allow_html=True)
         if st.button("Ensiklopedia Gizi", use_container_width=True, help="Cari tahu kandungan detail dari ratusan jenis bahan makanan."):
             st.session_state.menu_utama = "Ensiklopedia Gizi"
             st.rerun()
