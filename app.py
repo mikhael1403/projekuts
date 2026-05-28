@@ -1,7 +1,7 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
-
+import re
 # Set konfigurasi layout
 st.set_page_config(page_title="NutriExpert Super CF", layout="wide", initial_sidebar_state="expanded")
 st.markdown("""
@@ -19,11 +19,14 @@ st.markdown("""
 @st.cache_data
 def load_nutrition_standards():
     try:
-        return pd.read_csv("standard-nutrition.csv")
+        df = pd.read_csv("standard-nutrition.csv")
+        if 'Nutrisi' in df.columns:
+            df['Nutrisi'] = df['Nutrisi'].astype(str).apply(lambda x: re.sub(r'^\d+\s*', '', x))
+            
+        return df
     except FileNotFoundError:
         st.error("File 'standard-nutrition.csv' tidak ditemukan.")
         return pd.DataFrame()
-
 @st.cache_data
 def load_food_data():
     try:
