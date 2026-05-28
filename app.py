@@ -168,7 +168,7 @@ elif menu == "Rekomendasi Makanan":
 # ----------------- HALAMAN 4: ANALISIS ASUPAN (REVISI) -----------------
 elif menu == "Analisis Asupan Harian":
     st.title("Evaluasi Asupan Harian")
-    st.write("Sistem dengan indikator batas minimum dan maksimum.")
+    st.write("Sistem dengan indikator batas minimum dan maksimum gizi harian.")
     
     selected_items = st.multiselect("Pilih daftar menu makanan Anda hari ini:", st.session_state.food_df["Nama Makanan"].unique())
     if selected_items:
