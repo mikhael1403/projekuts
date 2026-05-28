@@ -400,14 +400,12 @@ elif menu == "Panel Admin":
             st.rerun()
         
         st.divider()
-        st.subheader("A. Edit Aturan Diagnosis Lama")
-        st.session_state.rules_symptoms_old = st.data_editor(st.session_state.rules_symptoms_old, num_rows="dynamic", key="edit_old")
         
-        st.subheader("B. Edit Aturan Dual-Diagnosis Baru")
+        st.subheader("A. Edit Aturan Dual-Diagnosis Baru")
         st.write("Aturan ini di-generate otomatis dari CSV. Ubah bobot CF di sini.")
         st.session_state.rules_symptoms_new = st.data_editor(st.session_state.rules_symptoms_new, num_rows="dynamic", key="edit_new")
         
-        st.subheader("C. Edit Sensitivitas Prediksi Penyakit")
+        st.subheader("B. Edit Sensitivitas Prediksi Penyakit")
         st.write("Atur seberapa 'Yakin' sistem (CF Pakar) dalam memprediksi penyakit berdasarkan asupan yang melenceng dari standar.")
         st.session_state.cf_pakar_prediksi = st.slider(
             "Bobot CF Pakar Prediksi Penyakit:", 
