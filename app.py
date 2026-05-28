@@ -161,8 +161,7 @@ if menu == "Beranda":
             <p><b>Pemulihan Gizi (CF):</b> Hitung kepastian (persentase CF) suatu makanan dalam menutupi defisit gizi Anda.</p>
         </div>
         """, unsafe_allow_html=True)
-        
-   with col3: 
+    with col3: 
         st.markdown("""
         <div class="feature-card">
             <h3>Diagnosis Sistem Pakar</h3>
