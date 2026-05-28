@@ -150,15 +150,15 @@ if st.session_state.menu_utama == "Beranda":
         st.markdown("""
         <div class="feature-card">
             <h3 style="text-align: center;">Ensiklopedia & Asupan</h3>
-        </div>
-        """, unsafe_allow_html=True)
+        
         if st.button("Ensiklopedia Gizi", use_container_width=True, help="Cari tahu kandungan detail dari ratusan jenis bahan makanan."):
             st.session_state.menu_utama = "Ensiklopedia Gizi"
             st.rerun()
         if st.button("Analisis Asupan Harian", use_container_width=True, help="Masukkan makanan Anda hari ini dan lihat apakah sudah memenuhi standar AKG."):
             st.session_state.menu_utama = "Analisis Asupan Harian"
             st.rerun()
-
+        </div>
+        """, unsafe_allow_html=True)
     with col2: 
         st.markdown("""
         <div class="feature-card">
