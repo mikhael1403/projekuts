@@ -1,7 +1,8 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
-import re
+import re  # Untuk membersihkan teks/angka nyasar
+
 # Set konfigurasi layout
 st.set_page_config(page_title="NutriExpert Super CF", layout="wide", initial_sidebar_state="expanded")
 st.markdown("""
@@ -20,19 +21,27 @@ st.markdown("""
 def load_nutrition_standards():
     try:
         df = pd.read_csv("standard-nutrition.csv")
+        # Membersihkan angka nyasar di awal nama nutrisi (misal "18 Phosphorus")
         if 'Nutrisi' in df.columns:
             df['Nutrisi'] = df['Nutrisi'].astype(str).apply(lambda x: re.sub(r'^\d+\s*', '', x))
-            
         return df
     except FileNotFoundError:
         st.error("File 'standard-nutrition.csv' tidak ditemukan.")
         return pd.DataFrame()
+
 @st.cache_data
 def load_food_data():
     try:
         df = pd.read_csv("foods.csv")
+        # Rename kolom Menu ke Nama Makanan
         if "Menu" in df.columns:
             df.rename(columns={"Menu": "Nama Makanan"}, inplace=True)
+            
+        # MENGHAPUS KOLOM "ID" ATAU "Unnamed: 0" AGAR TIDAK MUNCUL DI DROPDOWN
+        kolom_sampah = [col for col in ["ID", "Unnamed: 0", "id"] if col in df.columns]
+        if kolom_sampah:
+            df.drop(columns=kolom_sampah, inplace=True)
+            
         df.fillna(0, inplace=True)
         return df
     except FileNotFoundError:
@@ -95,7 +104,9 @@ if not AKG_MIN:
     AKG_MIN = {"Protein (g)": 13.0, "Dietary Fiber (g)": 14.0, "Vitamin C (mg)": 15.0, "Iron (mg)": 7.0}
 
 cf_options = {"Tidak Merasakan": 0.0, "Gejala Ringan": 0.4, "Gejala Sedang": 0.7, "Gejala Parah": 1.0}
-available_nutrients = [col for col in st.session_state.food_df.columns if col not in ["Unnamed: 0", "Nama Makanan"] and pd.api.types.is_numeric_dtype(st.session_state.food_df[col])]
+
+# Ekstrak daftar nutrisi murni (hanya kolom angka & bukan nama makanan/ID)
+available_nutrients = [col for col in st.session_state.food_df.columns if col not in ["Nama Makanan", "ID", "Unnamed: 0"] and pd.api.types.is_numeric_dtype(st.session_state.food_df[col])]
 
 # =========================================================================
 # 2. SIDEBAR NAVIGATION
@@ -131,29 +142,34 @@ if menu == "1. Ensiklopedia Gizi":
 # ----------------- HALAMAN 2: REKOMENDASI (LAMA) -----------------
 elif menu == "2. Rekomendasi CF (Lama)":
     st.title("🎯 2. Rekomendasi Makanan (Versi Lama)")
-    gizi_pilihan = st.selectbox("Nutrisi yang ingin dipenuhi:", available_nutrients, index=0)
-    target_akg = AKG_MIN.get(gizi_pilihan, 10.0)
-    st.info(f"Target minimal harian untuk **{gizi_pilihan}** adalah **{target_akg}**.")
+    
+    # Validasi jika list kosong
+    if not available_nutrients:
+        st.warning("Tidak ada data nutrisi yang tersedia.")
+    else:
+        gizi_pilihan = st.selectbox("Nutrisi yang ingin dipenuhi:", available_nutrients, index=0)
+        target_akg = AKG_MIN.get(gizi_pilihan, 10.0)
+        st.info(f"Target minimal harian untuk **{gizi_pilihan}** adalah **{target_akg}**.")
 
-    if st.button("Hitung Rekomendasi"):
-        recommendations = []
-        for _, row in st.session_state.food_df.iterrows():
-            nilai_gizi = float(row.get(gizi_pilihan, 0))
-            if nilai_gizi > 0:
-                cf_score = min(nilai_gizi / target_akg, 1.0) 
-                if cf_score >= 0.1:
-                    recommendations.append({
-                        "Nama Makanan": row["Nama Makanan"],
-                        f"Kandungan": nilai_gizi,
-                        "Skor CF": cf_score,
-                        "Keyakinan Sistem": f"{cf_score * 100:.2f} %"
-                    })
-        if recommendations:
-            rec_df = pd.DataFrame(recommendations).sort_values(by="Skor CF", ascending=False).head(20)
-            st.success(f"Ditemukan {len(recommendations)} makanan penunjang. Berikut Top 20 Makanan Terbaik:")
-            st.dataframe(rec_df[["Nama Makanan", "Kandungan", "Keyakinan Sistem"]], use_container_width=True)
-        else:
-            st.warning("Tidak ada makanan yang memenuhi syarat.")
+        if st.button("Hitung Rekomendasi"):
+            recommendations = []
+            for _, row in st.session_state.food_df.iterrows():
+                nilai_gizi = float(row.get(gizi_pilihan, 0))
+                if nilai_gizi > 0:
+                    cf_score = min(nilai_gizi / target_akg, 1.0) 
+                    if cf_score >= 0.1:
+                        recommendations.append({
+                            "Nama Makanan": row["Nama Makanan"],
+                            f"Kandungan": nilai_gizi,
+                            "Skor CF": cf_score,
+                            "Keyakinan Sistem": f"{cf_score * 100:.2f} %"
+                        })
+            if recommendations:
+                rec_df = pd.DataFrame(recommendations).sort_values(by="Skor CF", ascending=False).head(20)
+                st.success(f"Ditemukan {len(recommendations)} makanan penunjang. Berikut Top 20 Makanan Terbaik:")
+                st.dataframe(rec_df[["Nama Makanan", "Kandungan", "Keyakinan Sistem"]], use_container_width=True)
+            else:
+                st.warning("Tidak ada makanan yang memenuhi syarat.")
 
 # ----------------- HALAMAN 3: DIAGNOSIS (LAMA) -----------------
 elif menu == "3. Diagnosis Gejala (Lama)":
@@ -229,27 +245,30 @@ elif menu == "5. CF Pemulihan Gizi (Baru)":
     st.title("🔋 5. CF Pemulihan Makanan")
     st.write("Konsep Baru 1: Hitung Certainty Factor (Kepastian) suatu makanan mampu **menyembuhkan defisit gizi spesifik** Anda.")
     
-    gizi_pilihan = st.selectbox("Saya sedang kekurangan gizi:", available_nutrients, index=0)
-    target_akg = AKG_MIN.get(gizi_pilihan, 10.0)
-    defisit_user = st.number_input(f"Berapa banyak defisit {gizi_pilihan} yang ingin ditutupi?", value=float(target_akg))
+    if not available_nutrients:
+        st.warning("Tidak ada data nutrisi yang tersedia.")
+    else:
+        gizi_pilihan = st.selectbox("Saya sedang kekurangan gizi:", available_nutrients, index=0)
+        target_akg = AKG_MIN.get(gizi_pilihan, 10.0)
+        defisit_user = st.number_input(f"Berapa banyak defisit {gizi_pilihan} yang ingin ditutupi?", value=float(target_akg))
 
-    if st.button("Cari Obat Alami (Makanan)"):
-        recommendations = []
-        for _, row in st.session_state.food_df.iterrows():
-            nilai_gizi = float(row.get(gizi_pilihan, 0))
-            if nilai_gizi > 0 and defisit_user > 0:
-                cf_score = min(nilai_gizi / defisit_user, 1.0) 
-                if cf_score >= 0.1:
-                    recommendations.append({
-                        "Nama Makanan": row["Nama Makanan"],
-                        f"Kandungan Makanan": f"{nilai_gizi:.1f}",
-                        "Kepastian Memulihkan": cf_score
-                    })
-        if recommendations:
-            rec_df = pd.DataFrame(recommendations).sort_values(by="Kepastian Memulihkan", ascending=False).head(15)
-            rec_df["Kepastian Memulihkan"] = rec_df["Kepastian Memulihkan"].apply(lambda x: f"{x * 100:.1f} %")
-            st.success("Tabel Makanan Pemulih Terbaik:")
-            st.dataframe(rec_df, use_container_width=True)
+        if st.button("Cari Obat Alami (Makanan)"):
+            recommendations = []
+            for _, row in st.session_state.food_df.iterrows():
+                nilai_gizi = float(row.get(gizi_pilihan, 0))
+                if nilai_gizi > 0 and defisit_user > 0:
+                    cf_score = min(nilai_gizi / defisit_user, 1.0) 
+                    if cf_score >= 0.1:
+                        recommendations.append({
+                            "Nama Makanan": row["Nama Makanan"],
+                            f"Kandungan Makanan": f"{nilai_gizi:.1f}",
+                            "Kepastian Memulihkan": cf_score
+                        })
+            if recommendations:
+                rec_df = pd.DataFrame(recommendations).sort_values(by="Kepastian Memulihkan", ascending=False).head(15)
+                rec_df["Kepastian Memulihkan"] = rec_df["Kepastian Memulihkan"].apply(lambda x: f"{x * 100:.1f} %")
+                st.success("Tabel Makanan Pemulih Terbaik:")
+                st.dataframe(rec_df, use_container_width=True)
 
 # ----------------- HALAMAN 6: DUAL DIAGNOSIS (BARU 2) -----------------
 elif menu == "6. Dual-Diagnosis CF (Baru)":
@@ -300,7 +319,6 @@ elif menu == "7. Prediksi Penyakit (Baru)":
         
         risiko_list = []
         
-        # Mengecek semua nutrisi yang ada di tabel standar nutrisi
         for _, row_std in std_nutrition_df.iterrows():
             nutrisi_full = row_std['Nutrisi']
             if pd.isna(nutrisi_full) or nutrisi_full not in summary_gizi: 
@@ -311,17 +329,13 @@ elif menu == "7. Prediksi Penyakit (Baru)":
             batas_min = AKG_MIN.get(nutrisi_full, 1.0)
             batas_max = AKG_MAX.get(nutrisi_full, None)
             
-            # Ekstrak nama penyakit/gejala dari CSV (Jika kosong, pakai teks default)
             penyakit_kurang = str(row_std['Dampak Kekurangan']).capitalize() if pd.notna(row_std['Dampak Kekurangan']) else f"Penyakit defisit {nutrisi_name}"
             penyakit_lebih = str(row_std['Dampak Kelebihan']).capitalize() if pd.notna(row_std['Dampak Kelebihan']) else f"Keracunan ekses {nutrisi_name}"
             
-            # Hitung CF Kekurangan
             if asupan < batas_min:
-                cf_risiko = min((batas_min - asupan) / batas_min, 1.0) * 0.85 # 0.85 adalah bobot CF Pakar
+                cf_risiko = min((batas_min - asupan) / batas_min, 1.0) * 0.85 
                 if cf_risiko > 0.1: 
                     risiko_list.append((f"{penyakit_kurang} (Kekurangan {nutrisi_name})", cf_risiko))
-                    
-            # Hitung CF Kelebihan
             elif batas_max and asupan > batas_max:
                 cf_risiko = min((asupan - batas_max) / batas_max, 1.0) * 0.85
                 if cf_risiko > 0.1: 
@@ -330,9 +344,7 @@ elif menu == "7. Prediksi Penyakit (Baru)":
         st.divider()
         if risiko_list:
             st.subheader("⚠️ Top 10 Prediksi Risiko Klinis")
-            # Mengurutkan dari CF terbesar dan mengambil top 10 saja agar rapi
             top_10_risiko = sorted(risiko_list, key=lambda x: x[1], reverse=True)[:10]
-            
             for risiko, cf_val in top_10_risiko:
                 st.error(f"**Risiko Medis:** {risiko} | **CF Peluang Terjadi: {cf_val*100:.1f}%**")
         else:
