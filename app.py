@@ -4,7 +4,7 @@ import numpy as np
 import re  # Untuk membersihkan teks/angka nyasar
 
 # Set konfigurasi layout
-st.set_page_config(page_title="NutriExpert Super CF", layout="wide", initial_sidebar_state="expanded")
+st.set_page_config(page_title="NutrisiAnak", layout="wide", initial_sidebar_state="expanded")
 st.markdown("""
     <style>
     .stButton>button { border-radius: 20px; transition: all 0.3s; }
@@ -121,8 +121,8 @@ available_nutrients = [col for col in st.session_state.food_df.columns if pd.api
 # =========================================================================
 # 2. SIDEBAR NAVIGATION
 # =========================================================================
-st.sidebar.title("NutriExpert Master")
-menu = st.sidebar.radio("Navigasi Aplikasi:", [
+st.sidebar.title("NutrisiAnak")
+menu = st.sidebar.radio("", [
     "Beranda",
     "Ensiklopedia Gizi",
     "Rekomendasi Makanan",
